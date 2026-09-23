@@ -1,0 +1,271 @@
+// Katalog & Vorlagen. Preise = Richtpreise (Stand siehe STAND) – vor jedem Angebot kurz prüfen.
+export const STAND = '09/2026';
+
+export const SLOT_LABELS = {
+  cpu: 'Prozessor', cooler: 'CPU-Kühler', mobo: 'Mainboard', ram: 'Arbeitsspeicher', gpu: 'Grafikkarte',
+  storage: 'SSD', psu: 'Netzteil', case: 'Gehäuse', os: 'Betriebssystem', minipc: 'Mini-PC',
+  monitor: 'Monitor', keyboard: 'Tastatur', mouse: 'Maus', mousepad: 'Mauspad', headset: 'Headset',
+  webcam: 'Webcam', office: 'Office / Software',
+};
+
+const PC_SLOTS = ['cpu', 'cooler', 'mobo', 'ram', 'gpu', 'storage', 'psu', 'case', 'os'];
+const PERIPH = ['monitor', 'keyboard', 'mouse', 'mousepad', 'headset', 'webcam'];
+
+export const TYPES = {
+  pc: { label: 'Custom-PC', short: 'PC', icon: 'pc', slots: PC_SLOTS, views: ['pc'], service: 120, desc: 'Gaming- oder Creator-PC aus Einzelteilen' },
+  setup: { label: 'Komplett-Setup', short: 'Setup', icon: 'setup', slots: [...PC_SLOTS, ...PERIPH], views: ['setup', 'pc', 'kb'], service: 180, desc: 'PC + Monitor, Tastatur, Maus, Mauspad, Headset' },
+  keyboard: { label: 'Custom-Tastatur', short: 'Keyboard', icon: 'kb', slots: [], views: ['kb'], service: 60, kb: true, desc: 'Case, Plate, Switches, Keycaps – mit Sound-Test' },
+  workstation: { label: 'Firmen-Workstation', short: 'Workstation', icon: 'ws', slots: ['minipc', ...PERIPH, 'os', 'office'], views: ['setup', 'kb'], service: 80, desc: 'Mini-PC-Arbeitsplätze für Firmen, beliebige Stückzahl' },
+};
+
+export const STATUS = ['Idee', 'Entwurf', 'Angebot gesendet', 'Bestellt', 'Gebaut', 'Übergeben', 'Sammlung'];
+
+const c = (id, name, price, spec = {}) => ({ id, name, price, ...spec });
+
+export const CATALOG = {
+  cpu: [
+    c('cpu-7600', 'AMD Ryzen 5 7600', 185, { socket: 'AM5', tdp: 88, igpu: true, info: '6 Kerne · AM5 · mit Grafik' }),
+    c('cpu-9600x', 'AMD Ryzen 5 9600X', 219, { socket: 'AM5', tdp: 88, igpu: true, info: '6 Kerne · AM5 · mit Grafik' }),
+    c('cpu-7800x3d', 'AMD Ryzen 7 7800X3D', 349, { socket: 'AM5', tdp: 120, igpu: true, info: '8 Kerne · 3D-Cache · Gaming-König' }),
+    c('cpu-9800x3d', 'AMD Ryzen 7 9800X3D', 479, { socket: 'AM5', tdp: 120, igpu: true, info: '8 Kerne · 3D-Cache · schnellste Gaming-CPU' }),
+    c('cpu-9950x', 'AMD Ryzen 9 9950X', 559, { socket: 'AM5', tdp: 200, igpu: true, info: '16 Kerne · Rendering/Workstation' }),
+    c('cpu-14400f', 'Intel Core i5-14400F', 169, { socket: 'LGA1700', tdp: 148, igpu: false, info: '10 Kerne · LGA1700 · ohne Grafik' }),
+    c('cpu-245k', 'Intel Core Ultra 5 245K', 279, { socket: 'LGA1851', tdp: 159, igpu: true, info: '14 Kerne · LGA1851' }),
+    c('cpu-265k', 'Intel Core Ultra 7 265K', 299, { socket: 'LGA1851', tdp: 200, igpu: true, info: '20 Kerne · LGA1851' }),
+    c('cpu-285k', 'Intel Core Ultra 9 285K', 559, { socket: 'LGA1851', tdp: 250, igpu: true, info: '24 Kerne · LGA1851' }),
+  ],
+  cooler: [
+    c('cool-pa120', 'Thermalright Peerless Assassin 120 SE', 39, { kind: 'air', height: 155, dual: true, fan: '#1b1b1d', fin: '#b9bcc2', info: 'Luft · Doppelturm · 155 mm' }),
+    c('cool-d15', 'Noctua NH-D15 G2', 149, { kind: 'air', height: 168, dual: true, fan: '#8a5a3c', fin: '#c9ccd1', info: 'Luft · Doppelturm · 168 mm · sehr leise' }),
+    c('cool-drp5', 'be quiet! Dark Rock Pro 5', 99, { kind: 'air', height: 168, dual: true, fan: '#121212', fin: '#1e1e20', info: 'Luft · schwarz · 168 mm' }),
+    c('cool-l12', 'Noctua NH-L12Sx77', 69, { kind: 'low', height: 77, fan: '#8a5a3c', fin: '#c9ccd1', info: 'Low-Profile · 77 mm · für kleine Cases' }),
+    c('cool-lf360', 'Arctic Liquid Freezer III 360', 109, { kind: 'aio', rad: 360, fan: '#161616', info: 'AiO-Wasserkühlung · 360 mm' }),
+    c('cool-lf360w', 'Arctic Liquid Freezer III 360 A-RGB (Weiß)', 129, { kind: 'aio', rad: 360, fan: '#eeeeee', rgb: true, info: 'AiO · 360 mm · weiß mit RGB' }),
+    c('cool-kr240', 'NZXT Kraken 240 RGB', 149, { kind: 'aio', rad: 240, fan: '#161616', rgb: true, info: 'AiO · 240 mm · Display-Pumpe' }),
+  ],
+  mobo: [
+    c('mb-b650tw', 'MSI MAG B650 Tomahawk WiFi', 199, { socket: 'AM5', ff: 'ATX', ram: 'DDR5', color: '#23262b', info: 'AM5 · ATX · DDR5 · WLAN' }),
+    c('mb-b650mtuf', 'ASUS TUF Gaming B650M-Plus WiFi', 169, { socket: 'AM5', ff: 'mATX', ram: 'DDR5', color: '#2a2b2e', info: 'AM5 · mATX · DDR5 · WLAN' }),
+    c('mb-b650i', 'Gigabyte B650I Aorus Ultra', 249, { socket: 'AM5', ff: 'ITX', ram: 'DDR5', color: '#1f2226', info: 'AM5 · Mini-ITX · DDR5' }),
+    c('mb-x870e', 'ASUS ROG Strix X870E-E Gaming WiFi', 479, { socket: 'AM5', ff: 'ATX', ram: 'DDR5', color: '#18191c', info: 'AM5 · ATX · High-End' }),
+    c('mb-x870w', 'ASUS ROG Strix X870-A Gaming WiFi (Weiß)', 349, { socket: 'AM5', ff: 'ATX', ram: 'DDR5', color: '#d9dadc', info: 'AM5 · ATX · weißes Design' }),
+    c('mb-b760d4', 'MSI PRO B760-P WiFi DDR4', 139, { socket: 'LGA1700', ff: 'ATX', ram: 'DDR4', color: '#23262b', info: 'LGA1700 · ATX · DDR4' }),
+    c('mb-b760m', 'Gigabyte B760M DS3H DDR5', 119, { socket: 'LGA1700', ff: 'mATX', ram: 'DDR5', color: '#23262b', info: 'LGA1700 · mATX · DDR5' }),
+    c('mb-z890', 'ASUS TUF Gaming Z890-Plus WiFi', 279, { socket: 'LGA1851', ff: 'ATX', ram: 'DDR5', color: '#2a2b2e', info: 'LGA1851 · ATX · DDR5' }),
+    c('mb-b860m', 'MSI B860M Gaming Plus WiFi', 169, { socket: 'LGA1851', ff: 'mATX', ram: 'DDR5', color: '#23262b', info: 'LGA1851 · mATX · DDR5' }),
+  ],
+  ram: [
+    c('ram-16-5600', 'Kingston Fury Beast 16 GB DDR5-5600 (2×8)', 55, { ramType: 'DDR5', sticks: 2, color: '#1b1b1d', info: '16 GB · DDR5' }),
+    c('ram-32-6000', 'Corsair Vengeance 32 GB DDR5-6000 CL30 (2×16)', 109, { ramType: 'DDR5', sticks: 2, color: '#1b1b1d', info: '32 GB · DDR5 · Sweetspot' }),
+    c('ram-32-rgb', 'G.Skill Trident Z5 RGB 32 GB DDR5-6400 (2×16)', 149, { ramType: 'DDR5', sticks: 2, rgb: true, color: '#2b2d31', info: '32 GB · DDR5 · RGB' }),
+    c('ram-32-rgbw', 'Corsair Vengeance RGB 32 GB DDR5-6000 Weiß (2×16)', 129, { ramType: 'DDR5', sticks: 2, rgb: true, color: '#e9e9ec', info: '32 GB · DDR5 · weiß RGB' }),
+    c('ram-64-6000', 'Kingston Fury Beast 64 GB DDR5-6000 (2×32)', 199, { ramType: 'DDR5', sticks: 2, color: '#1b1b1d', info: '64 GB · DDR5 · Creator' }),
+    c('ram-128', 'Corsair Vengeance 128 GB DDR5-5600 (4×32)', 399, { ramType: 'DDR5', sticks: 4, color: '#1b1b1d', info: '128 GB · 4 Riegel · Workstation' }),
+    c('ram-32-d4', 'Corsair Vengeance LPX 32 GB DDR4-3200 (2×16)', 69, { ramType: 'DDR4', sticks: 2, color: '#1b1b1d', info: '32 GB · DDR4' }),
+  ],
+  gpu: [
+    c('gpu-5060', 'NVIDIA GeForce RTX 5060 8 GB', 299, { tdp: 145, len: 240, slots: 2, fans: 2, color: '#26282c', info: '1080p · 145 W' }),
+    c('gpu-5060ti', 'NVIDIA GeForce RTX 5060 Ti 16 GB', 449, { tdp: 180, len: 250, slots: 2, fans: 2, color: '#26282c', info: '1080p/1440p · 16 GB' }),
+    c('gpu-9060xt', 'AMD Radeon RX 9060 XT 16 GB', 379, { tdp: 160, len: 260, slots: 2, fans: 2, color: '#2c2d31', info: '1080p/1440p · 16 GB' }),
+    c('gpu-5070', 'NVIDIA GeForce RTX 5070 12 GB', 579, { tdp: 250, len: 290, slots: 2.5, fans: 3, color: '#222326', info: '1440p · 250 W' }),
+    c('gpu-9070', 'AMD Radeon RX 9070 16 GB', 599, { tdp: 220, len: 300, slots: 2.5, fans: 3, color: '#2c2d31', info: '1440p · 16 GB' }),
+    c('gpu-9070xt', 'AMD Radeon RX 9070 XT 16 GB', 699, { tdp: 304, len: 320, slots: 3, fans: 3, color: '#1d1e21', info: '1440p high · 16 GB' }),
+    c('gpu-5070ti', 'NVIDIA GeForce RTX 5070 Ti 16 GB', 849, { tdp: 300, len: 305, slots: 3, fans: 3, color: '#222326', info: '1440p/4K · 16 GB' }),
+    c('gpu-5070tiw', 'NVIDIA GeForce RTX 5070 Ti 16 GB (Weiß)', 889, { tdp: 300, len: 305, slots: 3, fans: 3, color: '#e7e7ea', info: '1440p/4K · weißes Design' }),
+    c('gpu-5080', 'NVIDIA GeForce RTX 5080 16 GB', 1149, { tdp: 360, len: 330, slots: 3, fans: 3, color: '#1c1d20', info: '4K · 360 W' }),
+    c('gpu-5090', 'NVIDIA GeForce RTX 5090 32 GB', 2399, { tdp: 575, len: 357, slots: 3.5, fans: 3, color: '#18191b', info: '4K max · 575 W · 32 GB' }),
+  ],
+  storage: [
+    c('ssd-sn850x-1', 'WD Black SN850X 1 TB', 89, { info: 'NVMe PCIe 4.0' }),
+    c('ssd-p3p-2', 'Crucial P3 Plus 2 TB', 109, { info: 'NVMe PCIe 4.0 · günstig' }),
+    c('ssd-990-2', 'Samsung 990 Pro 2 TB', 169, { info: 'NVMe PCIe 4.0 · schnell' }),
+    c('ssd-990-4', 'Samsung 990 Pro 4 TB', 319, { info: 'NVMe PCIe 4.0 · viel Platz' }),
+    c('ssd-t705-2', 'Crucial T705 2 TB', 249, { info: 'NVMe PCIe 5.0 · extrem schnell' }),
+  ],
+  psu: [
+    c('psu-pp12-750', 'be quiet! Pure Power 12 M 750 W', 99, { watt: 750, ff: 'ATX', info: '750 W · 80+ Gold · ATX 3.1' }),
+    c('psu-rm850x', 'Corsair RM850x', 139, { watt: 850, ff: 'ATX', info: '850 W · 80+ Gold · vollmodular' }),
+    c('psu-gx1000', 'Seasonic Focus GX-1000', 189, { watt: 1000, ff: 'ATX', info: '1000 W · 80+ Gold' }),
+    c('psu-dp13', 'be quiet! Dark Power 13 1000 W', 259, { watt: 1000, ff: 'ATX', info: '1000 W · 80+ Titanium' }),
+    c('psu-rm1200', 'Corsair RM1200x Shift', 249, { watt: 1200, ff: 'ATX', info: '1200 W · für RTX 5090' }),
+    c('psu-sf750', 'Corsair SF750', 179, { watt: 750, ff: 'SFX', info: '750 W · SFX · für kleine Cases' }),
+    c('psu-sf1000', 'Corsair SF1000', 229, { watt: 1000, ff: 'SFX', info: '1000 W · SFX' }),
+  ],
+  case: [
+    c('case-o11b', 'Lian Li O11 Dynamic EVO (Schwarz)', 169, { ff: ['ATX', 'mATX', 'ITX'], maxGpu: 422, maxCooler: 167, maxRad: 360, psu: 'ATX', dims: [459, 285, 465], color: '#17181b', style: 'dual-glass', info: 'ATX · Glas vorne + Seite · Showcase' }),
+    c('case-o11w', 'Lian Li O11 Dynamic EVO (Weiß)', 179, { ff: ['ATX', 'mATX', 'ITX'], maxGpu: 422, maxCooler: 167, maxRad: 360, psu: 'ATX', dims: [459, 285, 465], color: '#e9e9ec', style: 'dual-glass', rgbFans: true, info: 'ATX · weiß · Showcase' }),
+    c('case-north', 'Fractal Design North (Charcoal/Walnuss)', 149, { ff: ['ATX', 'mATX', 'ITX'], maxGpu: 355, maxCooler: 170, maxRad: 360, psu: 'ATX', dims: [469, 215, 447], color: '#2a2b2d', style: 'wood', info: 'ATX · Holzfront · wohnzimmertauglich' }),
+    c('case-h6', 'NZXT H6 Flow (Weiß)', 109, { ff: ['ATX', 'mATX', 'ITX'], maxGpu: 365, maxCooler: 163, maxRad: 360, psu: 'ATX', dims: [435, 287, 415], color: '#ececef', style: 'dual-glass', rgbFans: true, info: 'ATX · Panorama-Glas' }),
+    c('case-4000d', 'Corsair 4000D Airflow (Schwarz)', 99, { ff: ['ATX', 'mATX', 'ITX'], maxGpu: 360, maxCooler: 170, maxRad: 360, psu: 'ATX', dims: [466, 230, 453], color: '#1a1b1e', style: 'mesh', info: 'ATX · Mesh · beste Kühlung/Preis' }),
+    c('case-4000dw', 'Corsair 4000D Airflow (Weiß)', 99, { ff: ['ATX', 'mATX', 'ITX'], maxGpu: 360, maxCooler: 170, maxRad: 360, psu: 'ATX', dims: [466, 230, 453], color: '#e8e8eb', style: 'mesh', info: 'ATX · Mesh · weiß' }),
+    c('case-d31', 'Jonsbo D31 Mesh (Schwarz)', 89, { ff: ['mATX', 'ITX'], maxGpu: 400, maxCooler: 168, maxRad: 360, psu: 'ATX', dims: [440, 205, 400], color: '#1c1d20', style: 'glass', info: 'mATX · kompakt' }),
+    c('case-a4h2o', 'Lian Li A4-H2O', 149, { ff: ['ITX'], maxGpu: 322, maxCooler: 55, maxRad: 240, psu: 'SFX', dims: [255, 150, 345], color: '#2b2c2f', style: 'sff', info: 'Mini-ITX · 11 Liter · nur AiO 240' }),
+    c('case-terra', 'Fractal Design Terra', 189, { ff: ['ITX'], maxGpu: 322, maxCooler: 77, maxRad: 0, psu: 'SFX', dims: [240, 155, 340], color: '#3b3d3a', style: 'wood', info: 'Mini-ITX · 10 Liter · Holz-Akzent' }),
+  ],
+  os: [
+    c('os-w11h', 'Windows 11 Home (Lizenz)', 135, { info: 'für Privatkunden' }),
+    c('os-w11p', 'Windows 11 Pro (Lizenz)', 145, { info: 'für Firmen / Domäne / BitLocker' }),
+  ],
+  minipc: [
+    c('mini-mac16', 'Apple Mac mini M4 (16 GB / 256 GB)', 699, { dims: [127, 50, 127], color: '#d6d7da', shape: 'mac', info: 'leise · macOS · Büro/Kreativ' }),
+    c('mini-mac24', 'Apple Mac mini M4 (24 GB / 512 GB)', 1149, { dims: [127, 50, 127], color: '#d6d7da', shape: 'mac', info: 'macOS · mehr Speicher' }),
+    c('mini-macpro', 'Apple Mac mini M4 Pro (24 GB / 512 GB)', 1649, { dims: [127, 50, 127], color: '#d6d7da', shape: 'mac', info: 'Video/Design-Workstation' }),
+    c('mini-m70q', 'Lenovo ThinkCentre M70q Gen 5 (i5, 16 GB, 512 GB)', 749, { dims: [179, 37, 183], color: '#1c1c1e', info: 'Business · Windows 11 Pro · 3 J. Garantie' }),
+    c('mini-hp800', 'HP Elite Mini 800 G9 (i5, 16 GB, 512 GB)', 849, { dims: [177, 34, 175], color: '#3a3b3f', info: 'Business · vPro · Windows 11 Pro' }),
+    c('mini-dell7020', 'Dell OptiPlex Micro 7020 (i5, 16 GB, 512 GB)', 799, { dims: [182, 36, 178], color: '#1c1c1e', info: 'Business · Windows 11 Pro' }),
+    c('mini-um890', 'Minisforum UM890 Pro (Ryzen 9, 32 GB, 1 TB)', 599, { dims: [130, 52, 126], color: '#b8babd', info: 'viel Leistung fürs Geld' }),
+    c('mini-ser8', 'Beelink SER8 (Ryzen 7, 32 GB, 1 TB)', 499, { dims: [135, 44, 135], color: '#8e9095', info: 'günstig · Office & leichtes Editing' }),
+  ],
+  monitor: [
+    c('mon-dells27', 'Dell S2725DS 27" QHD 100 Hz', 199, { inch: 27, ratio: 16 / 9, info: '27" · 2560×1440 · Büro' }),
+    c('mon-u2724d', 'Dell UltraSharp U2724D 27" QHD', 399, { inch: 27, ratio: 16 / 9, info: '27" · IPS Black · farbtreu' }),
+    c('mon-lg32uhd', 'LG 32UN650-W 32" 4K', 329, { inch: 32, ratio: 16 / 9, color: '#e7e7ea', info: '32" · 4K · weiß' }),
+    c('mon-g5', 'Samsung Odyssey G5 27" QHD 165 Hz', 229, { inch: 27, ratio: 16 / 9, info: '27" · 165 Hz · Gaming-Einstieg' }),
+    c('mon-lgoled', 'LG UltraGear 27GS95QE OLED 240 Hz', 699, { inch: 27, ratio: 16 / 9, info: '27" · OLED · 240 Hz' }),
+    c('mon-pg27', 'ASUS ROG Swift PG27UCDM 4K OLED 240 Hz', 1099, { inch: 27, ratio: 16 / 9, info: '27" · 4K OLED · 240 Hz' }),
+    c('mon-g8uw', 'Samsung Odyssey OLED G8 34" Ultrawide', 899, { inch: 34, ratio: 21 / 9, info: '34" · 21:9 · OLED' }),
+    c('mon-studio', 'Apple Studio Display 27" 5K', 1749, { inch: 27, ratio: 16 / 9, color: '#d6d7da', info: '27" · 5K · für Mac' }),
+  ],
+  keyboard: [
+    c('kb-custom', 'Custom-Tastatur (aus dem Konfigurator)', 0, { custom: true, info: 'Preis aus dem Tastatur-Konfigurator' }),
+    c('kb-q1max', 'Keychron Q1 Max', 219, { info: '75 % · Alu · wireless', preset: { layout: '75', caseId: 'kc-alu', caseColor: '#3a3d44', plateId: 'kp-pc', pcbId: 'kpcb-wl', switchId: 'sw-banana', capsId: 'kk-oem', colors: { alpha: '#e7e4dc', mod: '#5c6068', accent: '#d9502f', legend: '#2a2a2a' } } }),
+    c('kb-80he', 'Wooting 80HE', 199, { info: '80 % · Hall-Effect · Rapid Trigger', preset: { layout: '75', caseId: 'kc-abs', caseColor: '#18181a', plateId: 'kp-alu', pcbId: 'kpcb-rgb', switchId: 'sw-milky', capsId: 'kk-cherry', colors: { alpha: '#1e1e20', mod: '#1e1e20', accent: '#1e1e20', legend: '#f2f2f2' } } }),
+    c('kb-g915', 'Logitech G915 X TKL', 229, { info: 'TKL · flach · wireless', preset: { layout: 'TKL', caseId: 'kc-alu', caseColor: '#1d1d1f', plateId: 'kp-alu', pcbId: 'kpcb-rgb', switchId: 'sw-red', capsId: 'kk-low', colors: { alpha: '#202022', mod: '#202022', accent: '#202022', legend: '#f2f2f2' } } }),
+    c('kb-mxkeys', 'Logitech MX Keys S', 109, { info: 'Full-Size · flach · Büro', preset: { layout: '100', caseId: 'kc-abs', caseColor: '#2e2f33', plateId: 'kp-alu', pcbId: 'kpcb-wl', switchId: 'sw-silent', capsId: 'kk-low', colors: { alpha: '#2b2c30', mod: '#2b2c30', accent: '#2b2c30', legend: '#eaeaea' } } }),
+    c('kb-magic', 'Apple Magic Keyboard mit Touch ID & Ziffernblock', 179, { info: 'Full-Size · für Mac', preset: { layout: '100', caseId: 'kc-alu', caseColor: '#d7d8db', plateId: 'kp-alu', pcbId: 'kpcb-wl', switchId: 'sw-silent', capsId: 'kk-low', colors: { alpha: '#f4f4f5', mod: '#f4f4f5', accent: '#f4f4f5', legend: '#1d1d1f' } } }),
+    c('kb-bw75', 'Razer BlackWidow V4 75% (Weiß)', 179, { info: '75 % · hot-swap', preset: { layout: '75', caseId: 'kc-alu', caseColor: '#ececef', plateId: 'kp-alu', pcbId: 'kpcb-rgb', switchId: 'sw-cream', capsId: 'kk-cherry', colors: { alpha: '#f1f1f3', mod: '#f1f1f3', accent: '#f1f1f3', legend: '#222' } } }),
+  ],
+  mouse: [
+    c('ms-gpxs2b', 'Logitech G Pro X Superlight 2 (Schwarz)', 139, { color: '#1b1b1d', info: '60 g · wireless · Esports' }),
+    c('ms-gpxs2w', 'Logitech G Pro X Superlight 2 (Weiß)', 139, { color: '#f0f0f2', info: '60 g · wireless · Esports' }),
+    c('ms-dav3', 'Razer DeathAdder V3 Pro', 149, { color: '#1b1b1d', info: 'ergonomisch · wireless' }),
+    c('ms-x2v2', 'Pulsar X2 V2 (Weiß)', 89, { color: '#eeeeef', info: 'symmetrisch · leicht' }),
+    c('ms-g305', 'Logitech G305 Lightspeed', 39, { color: '#26272a', info: 'Budget · wireless' }),
+    c('ms-mx3s', 'Logitech MX Master 3S', 99, { color: '#3a3b3f', info: 'Büro · ergonomisch · leise' }),
+    c('ms-magic', 'Apple Magic Mouse', 89, { color: '#f4f4f5', info: 'für Mac' }),
+  ],
+  mousepad: [
+    c('mp-hien', 'Artisan Hien Soft XL (490×420)', 65, { size: [490, 420], color: '#7e1d22', info: 'Control/Speed · Premium' }),
+    c('mp-g840', 'Logitech G840 XL (900×400)', 45, { size: [900, 400], color: '#161618', info: 'Deskmat · schwarz' }),
+    c('mp-qck', 'SteelSeries QcK Heavy XXL (900×400)', 45, { size: [900, 400], color: '#1a1a1c', info: 'Deskmat · dick' }),
+    c('mp-strider', 'Razer Strider XXL (940×410)', 55, { size: [940, 410], color: '#3a3b3f', info: 'Hybrid · grau' }),
+    c('mp-felt', 'Filz-Schreibtischunterlage (800×350)', 45, { size: [800, 350], color: '#8f8a80', info: 'Büro · Merinofilz' }),
+    c('mp-desk', 'Custom-Deskmat mit Motiv (900×400)', 39, { size: [900, 400], color: '#3b2a5c', info: 'eigenes Design möglich' }),
+  ],
+  headset: [
+    c('hs-cloud3', 'HyperX Cloud III', 89, { color: '#1b1b1d', accent: '#c8102e', info: 'Gaming · kabelgebunden' }),
+    c('hs-novapro', 'SteelSeries Arctis Nova Pro Wireless', 329, { color: '#1b1b1d', accent: '#555', info: 'ANC · wireless · Base-Station' }),
+    c('hs-hd560', 'Sennheiser HD 560S', 159, { color: '#222', accent: '#666', info: 'offen · audiophil' }),
+    c('hs-zone', 'Logitech Zone Vibe 100', 99, { color: '#2e2f33', accent: '#888', info: 'Büro · Teams/Zoom' }),
+    c('hs-jabra', 'Jabra Evolve2 65', 199, { color: '#1b1b1d', accent: '#555', info: 'Büro · zertifiziert für Teams' }),
+  ],
+  webcam: [
+    c('cam-c920', 'Logitech C920s', 59, { info: '1080p · Büro' }),
+    c('cam-face2', 'Elgato Facecam MK.2', 129, { info: '1080p60 · Streaming' }),
+    c('cam-brio', 'Logitech Brio 4K', 179, { info: '4K · HDR · Windows Hello' }),
+  ],
+  office: [
+    c('off-m365', 'Microsoft 365 Business Standard (1 Jahr)', 150, { info: 'Office + Teams + Exchange' }),
+    c('off-m365p', 'Microsoft 365 Business Premium (1 Jahr)', 264, { info: 'inkl. Sicherheit/Intune' }),
+    c('off-setup', 'Einrichtung Backup & Updates (pro Gerät)', 49, { info: 'Dienstleistung' }),
+  ],
+};
+
+// ---------- Tastatur-Konfigurator ----------
+export const KB = {
+  layouts: {
+    '60': { label: '60 %', mult: 1 },
+    '65': { label: '65 %', mult: 1.05 },
+    '75': { label: '75 %', mult: 1.1 },
+    'TKL': { label: 'TKL', mult: 1.2 },
+    '100': { label: 'Full-Size', mult: 1.35 },
+  },
+  layoutOrder: ['60', '65', '75', 'TKL', '100'],
+  cases: [
+    c('kc-abs', 'Kunststoff-Case (Budget)', 35, { material: 'plastic', pitch: 1.04 }),
+    c('kc-pc', 'Polycarbonat-Case (transparent)', 85, { material: 'pc', pitch: 0.94 }),
+    c('kc-wood', 'Holz-Case (Walnuss)', 110, { material: 'wood', pitch: 0.9 }),
+    c('kc-alu', 'Aluminium-Case (CNC, Gasket)', 140, { material: 'alu', pitch: 1 }),
+    c('kc-alu-prem', 'Alu-Case Premium (mit Messing-Gewicht)', 260, { material: 'alu', pitch: 0.97, weight: true }),
+  ],
+  plates: [
+    c('kp-alu', 'Alu-Plate', 25, { color: '#9aa0a8', pitch: 1.08, info: 'hell, knackig' }),
+    c('kp-brass', 'Messing-Plate', 45, { color: '#c9a45a', pitch: 1.18, info: 'hoch, klingelnd' }),
+    c('kp-fr4', 'FR4-Plate', 20, { color: '#1f2a24', pitch: 1, info: 'ausgewogen' }),
+    c('kp-cf', 'Carbon-Plate', 35, { color: '#202022', pitch: 1.1, info: 'steif, hell' }),
+    c('kp-pc', 'Polycarbonat-Plate', 22, { color: '#dcdfe4', pitch: 0.9, translucent: true, info: 'weich, tief' }),
+    c('kp-pom', 'POM-Plate', 28, { color: '#f0f0f0', pitch: 0.86, info: 'sehr tief, "thocky"' }),
+  ],
+  pcbs: [
+    c('kpcb-solder', 'PCB zum Löten', 35, { info: 'günstig, Switches fest' }),
+    c('kpcb-hs', 'Hot-Swap-PCB', 45, { info: 'Switches tauschbar' }),
+    c('kpcb-rgb', 'Hot-Swap-PCB mit RGB', 55, { rgb: true, info: 'tauschbar + Beleuchtung' }),
+    c('kpcb-wl', 'Hot-Swap-PCB Tri-Mode (Bluetooth/2.4 GHz/Kabel)', 75, { rgb: true, info: 'kabellos' }),
+  ],
+  switches: [
+    c('sw-oilking', 'Gateron Oil King', 0.55, { type: 'linear', color: '#2b2b2e', pitch: 0.8, info: 'linear · tief & "thocky"' }),
+    c('sw-red', 'Cherry MX2A Red', 0.45, { type: 'linear', color: '#d23b3b', pitch: 1, info: 'linear · Klassiker' }),
+    c('sw-milky', 'Gateron Milky Yellow Pro', 0.22, { type: 'linear', color: '#e8c440', pitch: 0.95, info: 'linear · Budget-Liebling' }),
+    c('sw-cream', 'Akko V3 Cream Yellow Pro', 0.28, { type: 'linear', color: '#f0d890', pitch: 0.92, info: 'linear · cremig' }),
+    c('sw-banana', 'Keychron K Pro Banana', 0.3, { type: 'tactile', color: '#f4d23c', pitch: 0.98, info: 'taktil · leicht' }),
+    c('sw-u4t', 'Boba U4T', 0.7, { type: 'tactile', color: '#6a5acd', pitch: 0.84, info: 'taktil · starker Bump · tief' }),
+    c('sw-panda', 'Glorious Panda', 0.55, { type: 'tactile', color: '#e7a47c', pitch: 1.02, info: 'taktil · runder Bump' }),
+    c('sw-jade', 'Kailh Box Jade', 0.45, { type: 'clicky', color: '#2aa87a', pitch: 1.1, info: 'clicky · laut & knackig' }),
+    c('sw-white', 'Kailh Box White', 0.35, { type: 'clicky', color: '#f5f5f5', pitch: 1.18, info: 'clicky · hell' }),
+    c('sw-silent', 'Gateron Silent Black', 0.4, { type: 'linear', color: '#141414', pitch: 0.78, damp: 0.7, info: 'linear · leise fürs Büro' }),
+  ],
+  caps: [
+    c('kk-cherry', 'Cherry-Profil PBT Doubleshot', 69, { h: 0.42, sculpt: 1, gloss: false, info: 'flach-sculpted · beliebt' }),
+    c('kk-gmk', 'GMK-Set (Cherry-Profil, ABS Doubleshot)', 139, { h: 0.42, sculpt: 1, gloss: true, info: 'Premium · kräftige Farben' }),
+    c('kk-oem', 'OEM-Profil PBT', 45, { h: 0.5, sculpt: 1.1, gloss: false, info: 'Standard-Höhe' }),
+    c('kk-sa', 'SA-Profil ABS', 109, { h: 0.66, sculpt: 1.5, gloss: true, info: 'hoch · retro' }),
+    c('kk-xda', 'XDA-Profil PBT Dye-Sub', 49, { h: 0.4, sculpt: 0, gloss: false, info: 'flach · uniform' }),
+    c('kk-mt3', 'MT3-Profil (Drop)', 109, { h: 0.58, sculpt: 1.3, gloss: false, info: 'tiefe Mulde · Schreibmaschine' }),
+    c('kk-low', 'Low-Profile (Serien-Tastatur)', 0, { h: 0.2, sculpt: 0, gloss: false, info: 'nur für Fertig-Tastaturen' }),
+  ],
+  stabs: [
+    c('ks-clip', 'Cherry Clip-in Stabs', 10, {}),
+    c('ks-durock', 'Durock V2 Screw-in Stabs', 22, {}),
+    c('ks-tx', 'TX AP Stabs', 35, {}),
+  ],
+  extras: [
+    c('kx-lube', 'Switches lubben (Dienstleistung)', 45, { damp: 0.25, pitch: 0.95 }),
+    c('kx-foam', 'Tape-/Foam-Mod', 15, { damp: 0.45 }),
+    c('kx-film', 'Switch-Filme', 10, { damp: 0.1 }),
+  ],
+  presets: [
+    { name: 'Olivia', colors: { alpha: '#efe7e0', mod: '#2b2b2b', accent: '#e8b4b8', legend: '#2b2b2b' } },
+    { name: 'Botanical', colors: { alpha: '#e9e6d9', mod: '#7a8c6e', accent: '#4f6b4a', legend: '#4f6b4a' } },
+    { name: 'Laser', colors: { alpha: '#2a1b3d', mod: '#44318d', accent: '#e98074', legend: '#d83f87' } },
+    { name: 'Carbon', colors: { alpha: '#d9d4c7', mod: '#56575b', accent: '#f07c1c', legend: '#333333' } },
+    { name: 'WoB', colors: { alpha: '#1c1c1e', mod: '#1c1c1e', accent: '#1c1c1e', legend: '#f2f2f2' } },
+    { name: 'Dolch', colors: { alpha: '#4a4a50', mod: '#2f2f33', accent: '#b3262f', legend: '#e8e8e8' } },
+    { name: 'Miami', colors: { alpha: '#f6f1e9', mod: '#3ac6c9', accent: '#f47bb0', legend: '#2a9fa2' } },
+    { name: 'Retro Beige', colors: { alpha: '#e6dcc6', mod: '#b9ad96', accent: '#c0392b', legend: '#3a3a3a' } },
+  ],
+};
+
+export const DEFAULT_KB = {
+  layout: '65', caseId: 'kc-alu', caseColor: '#2f3238', plateId: 'kp-fr4', pcbId: 'kpcb-hs', switchId: 'sw-oilking',
+  capsId: 'kk-cherry', stabId: 'ks-durock', extras: ['kx-lube', 'kx-foam'],
+  colors: { alpha: '#efe7e0', mod: '#2b2b2b', accent: '#e8b4b8', legend: '#2b2b2b' },
+};
+
+// ---------- Vorlagen ----------
+export const TEMPLATES = [
+  { type: 'pc', name: 'Einsteiger 1080p', parts: { cpu: 'cpu-7600', cooler: 'cool-pa120', mobo: 'mb-b650mtuf', ram: 'ram-32-6000', gpu: 'gpu-5060ti', storage: 'ssd-p3p-2', psu: 'psu-pp12-750', case: 'case-4000d', os: 'os-w11h' } },
+  { type: 'pc', name: 'Gaming 1440p', parts: { cpu: 'cpu-7800x3d', cooler: 'cool-pa120', mobo: 'mb-b650tw', ram: 'ram-32-6000', gpu: 'gpu-5070ti', storage: 'ssd-990-2', psu: 'psu-rm850x', case: 'case-north', os: 'os-w11h' } },
+  { type: 'pc', name: 'White Showcase 4K', parts: { cpu: 'cpu-9800x3d', cooler: 'cool-lf360w', mobo: 'mb-x870w', ram: 'ram-32-rgbw', gpu: 'gpu-5070tiw', storage: 'ssd-990-2', psu: 'psu-rm1200', case: 'case-o11w', os: 'os-w11h' } },
+  { type: 'pc', name: 'Enthusiast RTX 5090', parts: { cpu: 'cpu-9800x3d', cooler: 'cool-lf360', mobo: 'mb-x870e', ram: 'ram-64-6000', gpu: 'gpu-5090', storage: 'ssd-990-4', psu: 'psu-rm1200', case: 'case-o11b', os: 'os-w11h' } },
+  { type: 'pc', name: 'Mini-ITX Wohnzimmer', parts: { cpu: 'cpu-7800x3d', cooler: 'cool-l12', mobo: 'mb-b650i', ram: 'ram-32-6000', gpu: 'gpu-5070', storage: 'ssd-990-2', psu: 'psu-sf750', case: 'case-terra', os: 'os-w11h' } },
+  { type: 'pc', name: 'Creator-Workstation', parts: { cpu: 'cpu-9950x', cooler: 'cool-lf360', mobo: 'mb-x870e', ram: 'ram-128', gpu: 'gpu-5080', storage: 'ssd-990-4', psu: 'psu-gx1000', case: 'case-4000d', os: 'os-w11p' } },
+  { type: 'setup', name: 'Gaming-Setup komplett', parts: { cpu: 'cpu-7800x3d', cooler: 'cool-pa120', mobo: 'mb-b650tw', ram: 'ram-32-rgb', gpu: 'gpu-5070ti', storage: 'ssd-990-2', psu: 'psu-rm850x', case: 'case-o11b', os: 'os-w11h', monitor: 'mon-lgoled', keyboard: 'kb-custom', mouse: 'ms-gpxs2b', mousepad: 'mp-g840', headset: 'hs-cloud3', webcam: 'cam-face2' } },
+  { type: 'setup', name: 'White Streamer-Setup', parts: { cpu: 'cpu-9800x3d', cooler: 'cool-lf360w', mobo: 'mb-x870w', ram: 'ram-32-rgbw', gpu: 'gpu-5070tiw', storage: 'ssd-990-2', psu: 'psu-rm1200', case: 'case-o11w', os: 'os-w11h', monitor: 'mon-g8uw', keyboard: 'kb-custom', mouse: 'ms-gpxs2w', mousepad: 'mp-strider', headset: 'hs-novapro', webcam: 'cam-brio' }, kb: { caseColor: '#ececef', capsId: 'kk-cherry', colors: { alpha: '#f6f1e9', mod: '#3ac6c9', accent: '#f47bb0', legend: '#2a9fa2' } } },
+  { type: 'keyboard', name: '65 % Thock (Alu + FR4)', kb: {} },
+  { type: 'keyboard', name: 'TKL Clicky Retro (SA)', kb: { layout: 'TKL', caseId: 'kc-abs', caseColor: '#d8cfbd', plateId: 'kp-alu', switchId: 'sw-jade', capsId: 'kk-sa', extras: [], colors: { alpha: '#e6dcc6', mod: '#b9ad96', accent: '#c0392b', legend: '#3a3a3a' } } },
+  { type: 'keyboard', name: '75 % Transparent RGB', kb: { layout: '75', caseId: 'kc-pc', caseColor: '#e9edf2', plateId: 'kp-pc', pcbId: 'kpcb-rgb', switchId: 'sw-cream', capsId: 'kk-xda', colors: { alpha: '#2a1b3d', mod: '#44318d', accent: '#e98074', legend: '#d83f87' } } },
+  { type: 'keyboard', name: '60 % Holz Botanical', kb: { layout: '60', caseId: 'kc-wood', caseColor: '#6b4428', plateId: 'kp-brass', switchId: 'sw-u4t', capsId: 'kk-mt3', colors: { alpha: '#e9e6d9', mod: '#7a8c6e', accent: '#4f6b4a', legend: '#4f6b4a' } } },
+  { type: 'workstation', name: 'Büro Standard (Windows)', units: 5, parts: { minipc: 'mini-m70q', monitor: 'mon-dells27', keyboard: 'kb-mxkeys', mouse: 'ms-mx3s', mousepad: 'mp-felt', headset: 'hs-zone', webcam: 'cam-c920', office: 'off-m365' } },
+  { type: 'workstation', name: 'Mac-Arbeitsplatz Kreativ', units: 3, parts: { minipc: 'mini-mac24', monitor: 'mon-u2724d', keyboard: 'kb-magic', mouse: 'ms-magic', mousepad: 'mp-felt', headset: 'hs-jabra' } },
+  { type: 'workstation', name: 'Budget-Arbeitsplatz', units: 10, parts: { minipc: 'mini-ser8', monitor: 'mon-dells27', keyboard: 'kb-mxkeys', mouse: 'ms-g305', os: 'os-w11p', office: 'off-m365' } },
+];
