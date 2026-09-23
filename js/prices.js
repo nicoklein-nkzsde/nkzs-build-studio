@@ -1,0 +1,977 @@
+// Automatisch erzeugt vom Preis-Check (tools/merge.mjs). Nicht von Hand bearbeiten.
+// Neupreis = günstigster geprüfter idealo-Preis inkl. Versand · Gebraucht = Median Kleinanzeigen-Angebote
+export const CHECKED = "2026-09-23";
+export const PRICES = {
+ "cpu-7600": {
+  "price": 151.5,
+  "shop": "Kaufland",
+  "product": "AMD Ryzen 5 7600 Boxed",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/202266994_-ryzen-5-7600-boxed-amd.html",
+  "offers": 19,
+  "date": "2026-09-23"
+ },
+ "cpu-9600x": {
+  "price": 173.07,
+  "shop": "Amazon",
+  "product": "AMD Ryzen 5 9600X",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/204581805_-ryzen-5-9600x-amd.html",
+  "offers": 16,
+  "date": "2026-09-23",
+  "used": 160,
+  "usedMin": 140,
+  "usedN": 5,
+  "usedDate": "2026-09-23"
+ },
+ "cpu-7800x3d": {
+  "price": 298.97,
+  "shop": "Amazon",
+  "product": "AMD Ryzen 7 7800X3D Boxed (100-100000910WOF)",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/202372853_-ryzen-7-7800x3d-boxed-amd.html",
+  "offers": 39,
+  "date": "2026-09-23",
+  "note": "Boxed (Tray/OEM ausgeschlossen)",
+  "used": 220,
+  "usedMin": 220,
+  "usedN": 2,
+  "usedDate": "2026-09-23"
+ },
+ "cpu-9800x3d": {
+  "price": 384.9,
+  "shop": "galaxus.de",
+  "product": "AMD Ryzen 7 9800X3D",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/205072279_-ryzen-7-9800x3d-amd.html",
+  "offers": 15,
+  "date": "2026-09-23"
+ },
+ "cpu-9950x": {
+  "price": 433.87,
+  "shop": "playox.de",
+  "product": "AMD Ryzen 9 9950X",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/204581802_-ryzen-9-9950x-amd.html",
+  "offers": 15,
+  "date": "2026-09-23"
+ },
+ "cpu-14400f": {
+  "price": 162.1,
+  "shop": "galaxus.de",
+  "product": "Intel Core i5-14400F",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/203711970_-core-i5-14400f-intel.html",
+  "offers": 13,
+  "date": "2026-09-23",
+  "used": 110,
+  "usedMin": 110,
+  "usedN": 2,
+  "usedDate": "2026-09-23"
+ },
+ "cpu-245k": {
+  "price": 187.61,
+  "shop": "galaxus.de",
+  "product": "Intel Core Ultra 5 245K",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/204911341_-core-ultra-5-245k-intel.html",
+  "offers": 11,
+  "date": "2026-09-23"
+ },
+ "cpu-265k": {
+  "price": 313,
+  "shop": "kaufland.de",
+  "product": "Intel Core Ultra 7 265K Box",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/204911340_-core-ultra-7-265k-intel.html",
+  "offers": 7,
+  "date": "2026-09-23",
+  "used": 225,
+  "usedMin": 220,
+  "usedN": 4,
+  "usedDate": "2026-09-23"
+ },
+ "cpu-285k": {
+  "price": 529.43,
+  "shop": "galaxus.de",
+  "product": "Intel Core Ultra 9 285K",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/204911339_-core-ultra-9-285k-intel.html",
+  "offers": 7,
+  "date": "2026-09-23",
+  "used": 380,
+  "usedMin": 360,
+  "usedN": 3,
+  "usedDate": "2026-09-23"
+ },
+ "cool-pa120": {
+  "price": 42.99,
+  "shop": "eBay",
+  "product": "Thermalright Peerless Assassin 120 SE",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/202870980_-peerless-assassin-120-se-thermalright.html",
+  "offers": 3,
+  "date": "2026-09-23",
+  "used": 27,
+  "usedMin": 20,
+  "usedN": 4,
+  "usedDate": "2026-09-23"
+ },
+ "cool-d15": {
+  "price": 146.95,
+  "shop": "jacob.de",
+  "product": "Noctua NH-D15 G2",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/204497987_-nh-d15-g2-noctua.html",
+  "offers": 19,
+  "date": "2026-09-23"
+ },
+ "cool-drp5": {
+  "price": 79.91,
+  "shop": "galaxus.de",
+  "product": "be quiet! Dark Rock Pro 5",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/203396874_-dark-rock-pro-5-be-quiet.html",
+  "offers": 18,
+  "date": "2026-09-23",
+  "used": 65,
+  "usedMin": 45,
+  "usedN": 9,
+  "usedDate": "2026-09-23"
+ },
+ "cool-l12": {
+  "price": 86.01,
+  "shop": "jacob.de",
+  "product": "Noctua NH-L12Sx77",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/204320719_-nh-l12sx77-noctua.html",
+  "offers": 15,
+  "date": "2026-09-23"
+ },
+ "cool-lf360": {
+  "price": 73.55,
+  "shop": "e-tec.at (DE)",
+  "product": "ARCTIC Liquid Freezer III Pro 360, schwarz",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/206182027_-liquid-freezer-iii-pro-360-arctic-cooling.html",
+  "offers": 16,
+  "date": "2026-09-23",
+  "used": 45,
+  "usedMin": 35,
+  "usedN": 4,
+  "usedDate": "2026-09-23"
+ },
+ "cool-lf360w": {
+  "price": 85.4,
+  "shop": "Marktplatz",
+  "product": "ARCTIC Liquid Freezer III Pro 360 A-RGB, weiß",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/206182035_-liquid-freezer-iii-pro-360-a-rgb-weiss-arctic-cooling.html",
+  "offers": 15,
+  "date": "2026-09-23",
+  "used": 50,
+  "usedMin": 50,
+  "usedN": 2,
+  "usedDate": "2026-09-23"
+ },
+ "cool-kr240": {
+  "price": 144.71,
+  "shop": "Marktplatz",
+  "product": "NZXT Kraken 240 RGB, schwarz",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/202787943_-kraken-240-rgb-nzxt.html",
+  "offers": 9,
+  "date": "2026-09-23",
+  "used": 75,
+  "usedMin": 55,
+  "usedN": 7,
+  "usedDate": "2026-09-23"
+ },
+ "mb-b650tw": {
+  "price": 252.79,
+  "shop": "Amazon",
+  "product": "MSI MAG B650 Tomahawk WiFi",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/202139865_-mag-b650-tomahawk-wifi-msi.html",
+  "offers": 3,
+  "date": "2026-09-23",
+  "used": 135,
+  "usedMin": 120,
+  "usedN": 7,
+  "usedDate": "2026-09-23"
+ },
+ "mb-b650mtuf": {
+  "price": 150.9,
+  "shop": "Amazon",
+  "product": "ASUS TUF Gaming B650M-PLUS WiFi",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/202137525_-tuf-gaming-b650m-plus-wifi-asus.html",
+  "offers": 18,
+  "date": "2026-09-23",
+  "used": 120,
+  "usedMin": 100,
+  "usedN": 3,
+  "usedDate": "2026-09-23"
+ },
+ "mb-b650i": {
+  "price": 142.88,
+  "shop": "notebooksbilliger.de",
+  "product": "GIGABYTE B650I AX",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/203841879_-b650i-ax-gigabyte.html",
+  "offers": 19,
+  "date": "2026-09-23"
+ },
+ "mb-x870e": {
+  "price": 441.18,
+  "shop": "notebooksbilliger.de",
+  "product": "ASUS ROG STRIX X870E-E GAMING WIFI",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/204860655_-rog-strix-x870e-e-gaming-wifi-asus.html",
+  "offers": 18,
+  "date": "2026-09-23"
+ },
+ "mb-x870w": {
+  "price": 325.91,
+  "shop": "computeruniverse.net",
+  "product": "ASUS ROG STRIX X870-A GAMING WIFI",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/204861114_-rog-strix-x870-a-gaming-wifi-asus.html",
+  "offers": 20,
+  "date": "2026-09-23",
+  "used": 259,
+  "usedMin": 249,
+  "usedN": 3,
+  "usedDate": "2026-09-23"
+ },
+ "mb-b760d4": {
+  "price": 139,
+  "shop": "Amazon",
+  "product": "MSI PRO B760-P WiFi DDR4",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/202274064_-pro-b760-p-wifi-ddr4-msi.html",
+  "offers": 17,
+  "date": "2026-09-23"
+ },
+ "mb-b760m": {
+  "price": 96.78,
+  "shop": "Amazon",
+  "product": "GIGABYTE B760M DS3H GEN5",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/207513487_-b760m-ds3h-gen5-gigabyte.html",
+  "offers": 19,
+  "date": "2026-09-23"
+ },
+ "mb-z890": {
+  "price": 212.47,
+  "shop": "Marktplatz",
+  "product": "ASUS TUF GAMING Z890-PLUS WIFI",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/204951036_-tuf-gaming-z890-plus-wifi-asus.html",
+  "offers": 20,
+  "date": "2026-09-23"
+ },
+ "mb-b860m": {
+  "price": 156.9,
+  "shop": "Amazon",
+  "product": "MSI B860M Gaming Plus WiFi",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/205576404_-b860m-gaming-plus-wifi-msi.html",
+  "offers": 17,
+  "date": "2026-09-23"
+ },
+ "ram-32-6000": {
+  "price": 537.99,
+  "shop": "eBay",
+  "product": "Corsair Vengeance 32GB (2x16) DDR5-6000 CL30",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/203094996_-vengeance-32gb-kit-ddr5-6000-cl30-cmk32gx5m2b6000z30-corsair.html",
+  "offers": 9,
+  "date": "2026-09-23",
+  "used": 390,
+  "usedMin": 340,
+  "usedN": 8,
+  "usedDate": "2026-09-23"
+ },
+ "ram-32-rgb": {
+  "price": 598.13,
+  "shop": "caseking.de",
+  "product": "G.Skill Trident Z5 RGB 32GB DDR5-6400 CL32",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/201816030_-trident-z5-rgb-32gb-ddr5-6400-cl32-g-skill.html",
+  "offers": 15,
+  "date": "2026-09-23",
+  "used": 444,
+  "usedMin": 399,
+  "usedN": 10,
+  "usedDate": "2026-09-23"
+ },
+ "ram-32-rgbw": {
+  "price": 604.9,
+  "shop": "bora-computer.de",
+  "product": "Corsair Vengeance RGB 32GB DDR5-6000 CL30 weiß",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/203216017_-vengeance-rgb-32gb-kit-ddr5-6000-cl30-cmh32gx5m2b6000c30w-corsair.html",
+  "offers": 7,
+  "date": "2026-09-23",
+  "used": 390,
+  "usedMin": 380,
+  "usedN": 4,
+  "usedDate": "2026-09-23"
+ },
+ "ram-64-6000": {
+  "price": 937,
+  "shop": "it-veith.de",
+  "product": "Kingston Fury Beast 64GB (2x32) DDR5-6000 CL36",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/206785600_-fury-beast-64gb-kit-ddr5-6000-cl36-kf560c36bbe2k2-64-kingston.html",
+  "offers": 13,
+  "date": "2026-09-23",
+  "used": 700,
+  "usedMin": 550,
+  "usedN": 16,
+  "usedDate": "2026-09-23"
+ },
+ "ram-32-d4": {
+  "price": 209.99,
+  "shop": "Amazon",
+  "product": "Corsair Vengeance LPX 32GB (2x16) DDR4-3200",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/201654160_-vengeance-lpx-32gb-kit-ddr4-3200-cl16-corsair.html",
+  "offers": 14,
+  "date": "2026-09-23",
+  "used": 179,
+  "usedMin": 129,
+  "usedN": 13,
+  "usedDate": "2026-09-23"
+ },
+ "gpu-5060": {
+  "price": 418.9,
+  "shop": "galaxus.de",
+  "product": "ASUS Prime GeForce RTX 5060 OC 8GB",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/206512960_-geforce-rtx-5060-asus.html",
+  "offers": 19,
+  "date": "2026-09-23"
+ },
+ "gpu-5060ti": {
+  "price": 694.99,
+  "shop": "x-kom.de",
+  "product": "ASUS GeForce RTX 5060 Ti Dual OC 16GB",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/206264275_-geforce-rtx-5060-ti-16gb-dual-oc-asus.html",
+  "offers": 15,
+  "date": "2026-09-23",
+  "used": 650,
+  "usedMin": 550,
+  "usedN": 7,
+  "usedDate": "2026-09-23"
+ },
+ "gpu-9060xt": {
+  "price": 504.89,
+  "shop": "proshop.de",
+  "product": "ASUS Radeon RX 9060 XT DUAL 16GB",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/207329128_-radeon-rx-9060-xt-dual-16g-asus.html",
+  "offers": 16,
+  "date": "2026-09-23",
+  "used": 450,
+  "usedMin": 350,
+  "usedN": 7,
+  "usedDate": "2026-09-23"
+ },
+ "gpu-5070": {
+  "price": 789.99,
+  "shop": "x-kom.de",
+  "product": "Zotac GeForce RTX 5070 Twin Edge 12GB",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/206029274_-geforce-rtx-5070-zotac.html",
+  "offers": 20,
+  "date": "2026-09-23"
+ },
+ "gpu-9070": {
+  "price": 648.3,
+  "shop": "galaxus.de",
+  "product": "ASRock Radeon RX 9070 Challenger 16GB",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/206012229_-radeon-rx-9070-asrock.html",
+  "offers": 19,
+  "date": "2026-09-23"
+ },
+ "gpu-9070xt": {
+  "price": 772.89,
+  "shop": "alza.de",
+  "product": "ASRock Radeon RX 9070 XT Challenger 16GB",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/206011758_-radeon-rx-9070-xt-asrock.html",
+  "offers": 20,
+  "date": "2026-09-23",
+  "used": 700,
+  "usedMin": 680,
+  "usedN": 4,
+  "usedDate": "2026-09-23"
+ },
+ "gpu-5070ti": {
+  "price": 1149,
+  "shop": "kaufland.de",
+  "product": "PNY GeForce RTX 5070 Ti EPIC-X RGB OC 16GB",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/205948341_-geforce-rtx-5070-ti-pny.html",
+  "offers": 19,
+  "date": "2026-09-23",
+  "used": 700,
+  "usedMin": 549,
+  "usedN": 6,
+  "usedDate": "2026-09-23"
+ },
+ "gpu-5070tiw": {
+  "price": 1206.99,
+  "shop": "galaxus.de",
+  "product": "Zotac GeForce RTX 5070 Ti SOLID CORE OC White",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/206253038_-geforce-rtx-5070-ti-solid-core-oc-white-zotac.html",
+  "offers": 2,
+  "date": "2026-09-23"
+ },
+ "gpu-5080": {
+  "price": 1457.9,
+  "shop": "Amazon",
+  "product": "Palit GeForce RTX 5080 Infinity 3 16GB",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/205796764_-geforce-rtx-5080-palit.html",
+  "offers": 20,
+  "date": "2026-09-23",
+  "used": 1000,
+  "usedMin": 920,
+  "usedN": 3,
+  "usedDate": "2026-09-23"
+ },
+ "gpu-5090": {
+  "price": 5589.98,
+  "shop": "idealo",
+  "product": "GigaByte GeForce RTX 5090 Windforce OC 32G",
+  "url": "https://www.idealo.de/preisvergleich/MainSearchProductCategory.html?q=GigaByte+GeForce+RTX+5090+Windforce+OC",
+  "offers": 2,
+  "date": "2026-09-23",
+  "note": "Wasserkühler & externe Gehäuse aussortiert",
+  "used": 4999,
+  "usedMin": 2700,
+  "usedN": 7,
+  "usedDate": "2026-09-23"
+ },
+ "ssd-sn850x-1": {
+  "price": 194.99,
+  "shop": "mediamarkt.de",
+  "product": "WD_BLACK SN850X 1TB",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/202070634_-black-sn850x-1tb-western-digital.html",
+  "offers": 17,
+  "date": "2026-09-23"
+ },
+ "ssd-p3p-2": {
+  "price": 317.98,
+  "shop": "playox.de",
+  "product": "Crucial P3 Plus 2TB",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/202052932_-p3-plus-2tb-crucial.html",
+  "offers": 14,
+  "date": "2026-09-23"
+ },
+ "ssd-990-2": {
+  "price": 325,
+  "shop": "kaufland.de",
+  "product": "Samsung 990 PRO 2TB",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/202132324_-990-pro-2tb-samsung.html",
+  "offers": 17,
+  "date": "2026-09-23"
+ },
+ "ssd-990-4": {
+  "price": 607.99,
+  "shop": "eBay",
+  "product": "Samsung 990 PRO 4TB",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/203245598_-990-pro-4tb-samsung.html",
+  "offers": 18,
+  "date": "2026-09-23"
+ },
+ "ssd-t705-2": {
+  "price": 410.74,
+  "shop": "kaufland.de",
+  "product": "Crucial T705 2TB",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/203898812_-t705-2tb-crucial.html",
+  "offers": 13,
+  "date": "2026-09-23"
+ },
+ "psu-pp12-750": {
+  "price": 105.77,
+  "shop": "Marktplatz",
+  "product": "be quiet! Pure Power 13 M 750W",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/206603183_-pure-power-13-m-750w-be-quiet.html",
+  "offers": 20,
+  "date": "2026-09-23"
+ },
+ "psu-rm850x": {
+  "price": 134.9,
+  "shop": "galaxus.de",
+  "product": "Corsair RM850x (2024)",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/204812654_-rm850x-2024-850w-corsair.html",
+  "offers": 19,
+  "date": "2026-09-23"
+ },
+ "psu-gx1000": {
+  "price": 144.9,
+  "shop": "e-tec.at (DE)",
+  "product": "Seasonic Focus GX ATX 3 1000W",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/204987676_-focus-gx-atx-3-2024-1000w-schwarz-seasonic.html",
+  "offers": 20,
+  "date": "2026-09-23"
+ },
+ "psu-dp13": {
+  "price": 310.21,
+  "shop": "bueromarkt-ag.de",
+  "product": "be quiet! Dark Power 13 1000W",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/202283001_-dark-power-13-1000w-be-quiet.html",
+  "offers": 14,
+  "date": "2026-09-23"
+ },
+ "psu-rm1200": {
+  "price": 264.9,
+  "shop": "bora-computer.de",
+  "product": "Corsair RM1200x Shift",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/202313384_-rm1200x-shift-1200w-corsair.html",
+  "offers": 3,
+  "date": "2026-09-23"
+ },
+ "psu-sf750": {
+  "price": 164.06,
+  "shop": "galaxus.de",
+  "product": "Corsair SF750 (2024)",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/204437794_-sf750-2024-platinium-atx-3-1-750w-corsair.html",
+  "offers": 9,
+  "date": "2026-09-23"
+ },
+ "psu-sf1000": {
+  "price": 200.92,
+  "shop": "jacob.de",
+  "product": "Corsair SF1000 (2024)",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/204437812_-sf1000-2024-platinium-atx-3-1-1000w-corsair.html",
+  "offers": 14,
+  "date": "2026-09-23"
+ },
+ "case-o11w": {
+  "price": 175.9,
+  "shop": "Amazon Marketplace",
+  "product": "Lian Li O11D EVO RGB Weiß",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/203702447_-o11d-evo-rgb-weiss-lian-li.html",
+  "offers": 11,
+  "date": "2026-09-23",
+  "used": 95,
+  "usedMin": 95,
+  "usedN": 2,
+  "usedDate": "2026-09-23"
+ },
+ "case-north": {
+  "price": 126.99,
+  "shop": "proshop.de",
+  "product": "Fractal Design North TG Charcoal Black",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/202240674_-north-charcoal-black-tg-dark-fractal-design.html",
+  "offers": 14,
+  "date": "2026-09-23",
+  "used": 85,
+  "usedMin": 46,
+  "usedN": 6,
+  "usedDate": "2026-09-23"
+ },
+ "case-h6": {
+  "price": 92.75,
+  "shop": "computeruniverse.net",
+  "product": "NZXT H6 Flow Weiß",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/203462100_-h6-flow-weiss-nzxt.html",
+  "offers": 16,
+  "date": "2026-09-23",
+  "used": 60,
+  "usedMin": 50,
+  "usedN": 4,
+  "usedDate": "2026-09-23"
+ },
+ "case-4000dw": {
+  "price": 89.99,
+  "shop": "kaufland.de",
+  "product": "Corsair 4000D Airflow Weiß",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/200679789_-4000d-airflow-weiss-corsair.html",
+  "offers": 2,
+  "date": "2026-09-23"
+ },
+ "case-d31": {
+  "price": 60.85,
+  "shop": "reichelt.de",
+  "product": "Jonsbo D31 MESH",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/202674208_-d31-mesh-jonsbo.html",
+  "offers": 3,
+  "date": "2026-09-23"
+ },
+ "case-a4h2o": {
+  "price": 159.68,
+  "shop": "eBay",
+  "product": "Lian Li x DAN Cases A4-H2O",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/201853713_-a4-h2o-lian-li.html",
+  "offers": 8,
+  "date": "2026-09-23",
+  "used": 100,
+  "usedMin": 75,
+  "usedN": 4,
+  "usedDate": "2026-09-23"
+ },
+ "case-terra": {
+  "price": 228.98,
+  "shop": "galaxus.de",
+  "product": "Fractal Design Terra",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/202863209_-terra-fractal-design.html",
+  "offers": 6,
+  "date": "2026-09-23"
+ },
+ "mini-mac16": {
+  "price": 975.24,
+  "shop": "jacob.de",
+  "product": "Apple Mac mini M6 16GB/256GB (MHQK4ZD/A)",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/213579953_-mac-mini-m6-2026-mhqk4zd-a-apple.html",
+  "offers": 17,
+  "date": "2026-09-23"
+ },
+ "mini-um890": {
+  "price": 620.01,
+  "shop": "kaufland.de",
+  "product": "Minisforum UM890 Pro",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/205968027_-um890-pro-8945hs-minisforum.html",
+  "offers": 1,
+  "date": "2026-09-23"
+ },
+ "mon-dells27": {
+  "price": 201,
+  "shop": "Amazon",
+  "product": "Dell 27 Plus S2725DSM",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/208391544_-s2725dsm-dell.html",
+  "offers": 19,
+  "date": "2026-09-23"
+ },
+ "mon-u2724d": {
+  "price": 295.9,
+  "shop": "notebooksbilliger.de",
+  "product": "Dell UltraSharp U2724D",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/203609232_-u2724d-dell.html",
+  "offers": 18,
+  "date": "2026-09-23",
+  "used": 250,
+  "usedMin": 250,
+  "usedN": 3,
+  "usedDate": "2026-09-23"
+ },
+ "mon-lg32uhd": {
+  "price": 256,
+  "shop": "surffact.de",
+  "product": "LG UltraFine 32U720A-B",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/206994285_-ultrafine-32u720a-b-lg-electronics.html",
+  "offers": 17,
+  "date": "2026-09-23",
+  "used": 199,
+  "usedMin": 199,
+  "usedN": 2,
+  "usedDate": "2026-09-23"
+ },
+ "mon-g5": {
+  "price": 135.5,
+  "shop": "Marktplatz",
+  "product": "Samsung Odyssey G50F S27FG502EU",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/208648621_-odyssey-g50f-s27fg502eu-samsung.html",
+  "offers": 16,
+  "date": "2026-09-23",
+  "used": 110,
+  "usedMin": 99,
+  "usedN": 12,
+  "usedDate": "2026-09-23"
+ },
+ "mon-lgoled": {
+  "price": 544.47,
+  "shop": "easynotebooks.de",
+  "product": "LG UltraGear 27GS95QE-B",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/203873629_-27gs95qe-lg-electronics.html",
+  "offers": 14,
+  "date": "2026-09-23",
+  "used": 350,
+  "usedMin": 300,
+  "usedN": 4,
+  "usedDate": "2026-09-23"
+ },
+ "mon-pg27": {
+  "price": 841.35,
+  "shop": "Amazon",
+  "product": "ASUS ROG Swift PG27UCDM",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/205826967_-rog-swift-pg27ucdm-asus.html",
+  "offers": 20,
+  "date": "2026-09-23",
+  "used": 700,
+  "usedMin": 650,
+  "usedN": 5,
+  "usedDate": "2026-09-23"
+ },
+ "mon-g8uw": {
+  "price": 598.99,
+  "shop": "x-kom.de",
+  "product": "Samsung Odyssey OLED G8 S34DG850",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/205965708_-odyssey-oled-g8-s34dg850su-samsung.html",
+  "offers": 6,
+  "date": "2026-09-23",
+  "used": 499,
+  "usedMin": 400,
+  "usedN": 10,
+  "usedDate": "2026-09-23"
+ },
+ "mon-studio": {
+  "price": 1484,
+  "shop": "coolblue.de",
+  "product": "Apple Studio Display (2026)",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/209599440_-studio-display-2026-standard-vesa-adaptor-apple.html",
+  "offers": 10,
+  "date": "2026-09-23",
+  "used": 1000,
+  "usedMin": 875,
+  "usedN": 7,
+  "usedDate": "2026-09-23"
+ },
+ "kb-q1max": {
+  "price": 255.98,
+  "shop": "eBay",
+  "product": "Keychron Q1 Max (US-Layout)",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/204601657_-q1-max-keychron.html",
+  "offers": 4,
+  "date": "2026-09-23",
+  "note": "US-Layout"
+ },
+ "kb-g915": {
+  "price": 119.99,
+  "shop": "Amazon",
+  "product": "Logitech G915 X Lightspeed TKL",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/204839718_-g915-x-lightspeed-tkl-logitech-g.html",
+  "offers": 16,
+  "date": "2026-09-23",
+  "used": 90,
+  "usedMin": 50,
+  "usedN": 15,
+  "usedDate": "2026-09-23"
+ },
+ "kb-mxkeys": {
+  "price": 79,
+  "shop": "galaxus.de",
+  "product": "Logitech MX Keys S (DE)",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/202831590_-mx-keys-s-de-grafit-logitech.html",
+  "offers": 17,
+  "date": "2026-09-23",
+  "used": 65,
+  "usedMin": 40,
+  "usedN": 12,
+  "usedDate": "2026-09-23"
+ },
+ "kb-bw75": {
+  "price": 166.49,
+  "shop": "Amazon",
+  "product": "Razer BlackWidow V4 75% Weiß (US)",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/203702029_-blackwidow-v4-75-razer-orange-us-white-razer.html",
+  "offers": 3,
+  "date": "2026-09-23",
+  "note": "US-Layout",
+  "used": 70,
+  "usedMin": 70,
+  "usedN": 4,
+  "usedDate": "2026-09-23"
+ },
+ "kb-hv3": {
+  "price": 133.03,
+  "shop": "Amazon",
+  "product": "Razer Huntsman V3 Pro TKL",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/203803318_-huntsman-v3-pro-tkl-razer.html",
+  "offers": 8,
+  "date": "2026-09-23",
+  "used": 90,
+  "usedMin": 80,
+  "usedN": 5,
+  "usedDate": "2026-09-23"
+ },
+ "ms-gpxs2b": {
+  "price": 94.49,
+  "shop": "Amazon",
+  "product": "Logitech G Pro X Superlight 2",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/203223403_-g-pro-x-superlight-2-logitech.html",
+  "offers": 13,
+  "date": "2026-09-23",
+  "used": 70,
+  "usedMin": 50,
+  "usedN": 13,
+  "usedDate": "2026-09-23"
+ },
+ "ms-gpxs2w": {
+  "price": 94.49,
+  "shop": "Amazon",
+  "product": "Logitech G Pro X Superlight 2 Weiß",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/203223405_-g-pro-x-superlight-2-weiss-logitech.html",
+  "offers": 18,
+  "date": "2026-09-23",
+  "used": 75,
+  "usedMin": 55,
+  "usedN": 13,
+  "usedDate": "2026-09-23"
+ },
+ "ms-dav3": {
+  "price": 80.05,
+  "shop": "proshop.de",
+  "product": "Razer DeathAdder V3 Pro",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/202062898_-deathadder-v3-pro-razer.html",
+  "offers": 11,
+  "date": "2026-09-23",
+  "used": 50,
+  "usedMin": 30,
+  "usedN": 12,
+  "usedDate": "2026-09-23"
+ },
+ "ms-g305": {
+  "price": 35.85,
+  "shop": "maxgaming.gg",
+  "product": "Logitech G305 Lightspeed",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/6199379_-g305-lightspeed-logitech.html",
+  "offers": 16,
+  "date": "2026-09-23",
+  "used": 20,
+  "usedMin": 15,
+  "usedN": 13,
+  "usedDate": "2026-09-23"
+ },
+ "ms-mx3s": {
+  "price": 72.6,
+  "shop": "Marktplatz",
+  "product": "Logitech MX Master 3S",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/201968116_-mx-master-3s-logitech.html",
+  "offers": 19,
+  "date": "2026-09-23",
+  "used": 60,
+  "usedMin": 45,
+  "usedN": 14,
+  "usedDate": "2026-09-23"
+ },
+ "ms-magic": {
+  "price": 68.9,
+  "shop": "notebooksbilliger.de",
+  "product": "Apple Magic Mouse",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/205008372_-magic-mouse-2024-apple.html",
+  "offers": 18,
+  "date": "2026-09-23",
+  "used": 45,
+  "usedMin": 25,
+  "usedN": 15,
+  "usedDate": "2026-09-23"
+ },
+ "mp-hien": {
+  "price": 55.85,
+  "shop": "maxgaming.gg",
+  "product": "Artisan FX Hien XSOFT XL",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/204112399_-ninja-fx-hien-artisan.html",
+  "offers": 9,
+  "date": "2026-09-23"
+ },
+ "mp-g840": {
+  "price": 33.82,
+  "shop": "Amazon",
+  "product": "Logitech G840 XL",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/201913071_-g840-xl-logitech.html",
+  "offers": 20,
+  "date": "2026-09-23"
+ },
+ "mp-qck": {
+  "price": 49.99,
+  "shop": "Amazon",
+  "product": "SteelSeries QcK Heavy XXL",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/213487895_-qck-heavy-xxl-white-steelseries.html",
+  "offers": 1,
+  "date": "2026-09-23"
+ },
+ "mp-strider": {
+  "price": 54.9,
+  "shop": "Amazon",
+  "product": "Razer Strider XXL",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/201547389_-strider-xxl-razer.html",
+  "offers": 10,
+  "date": "2026-09-23"
+ },
+ "hs-cloud3": {
+  "price": 60.94,
+  "shop": "maxgaming.gg",
+  "product": "HyperX Cloud III",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/202904702_-cloud-iii-hyperx.html",
+  "offers": 19,
+  "date": "2026-09-23",
+  "used": 40,
+  "usedMin": 29,
+  "usedN": 14,
+  "usedDate": "2026-09-23"
+ },
+ "hs-novapro": {
+  "price": 249.99,
+  "shop": "mediamarkt.de",
+  "product": "SteelSeries Arctis Nova Pro Wireless",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/204291189_-arctis-nova-pro-wireless-schwarz-steelseries.html",
+  "offers": 18,
+  "date": "2026-09-23",
+  "used": 149,
+  "usedMin": 100,
+  "usedN": 15,
+  "usedDate": "2026-09-23"
+ },
+ "hs-hd560": {
+  "price": 127,
+  "shop": "hifiklubben.de",
+  "product": "Sennheiser HD 560S",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/200711292_-hd-560s-sennheiser.html",
+  "offers": 18,
+  "date": "2026-09-23"
+ },
+ "hs-zone": {
+  "price": 65.04,
+  "shop": "Amazon",
+  "product": "Logitech Zone Vibe 100",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/202123304_-zone-vibe-100-logitech.html",
+  "offers": 19,
+  "date": "2026-09-23",
+  "used": 45,
+  "usedMin": 25,
+  "usedN": 9,
+  "usedDate": "2026-09-23"
+ },
+ "hs-jabra": {
+  "price": 124.72,
+  "shop": "eBay",
+  "product": "Jabra Evolve2 65 Mono UC",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/200274498_-evolve2-65-jabra.html",
+  "offers": 14,
+  "date": "2026-09-23",
+  "used": 70,
+  "usedMin": 45,
+  "usedN": 14,
+  "usedDate": "2026-09-23"
+ },
+ "cam-c920": {
+  "price": 53.55,
+  "shop": "galaxus.de",
+  "product": "Logitech C920S Pro",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/6647247_-c920s-logitech.html",
+  "offers": 16,
+  "date": "2026-09-23",
+  "used": 35,
+  "usedMin": 20,
+  "usedN": 17,
+  "usedDate": "2026-09-23"
+ },
+ "cam-face2": {
+  "price": 122.9,
+  "shop": "galaxus.de",
+  "product": "Elgato Facecam MK.2",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/204170867_-facecam-mk-2-elgato.html",
+  "offers": 17,
+  "date": "2026-09-23",
+  "used": 93,
+  "usedMin": 70,
+  "usedN": 13,
+  "usedDate": "2026-09-23"
+ },
+ "cam-brio": {
+  "price": 99.38,
+  "shop": "prindo.de",
+  "product": "Logitech Brio 4K for Business",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/206727612_-brio-4k-for-business-2025-logitech.html",
+  "offers": 18,
+  "date": "2026-09-23",
+  "used": 70,
+  "usedMin": 55,
+  "usedN": 15,
+  "usedDate": "2026-09-23"
+ },
+ "mp-zero": {
+  "price": 55.85,
+  "shop": "maxgaming.gg",
+  "product": "Artisan FX Zero XSOFT XL",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/203674699_-ninja-fx-zero-xsoft-xl-artisan.html",
+  "offers": 3,
+  "date": "2026-09-23"
+ },
+ "mp-hayate": {
+  "price": 80.85,
+  "shop": "maxgaming.gg",
+  "product": "Artisan FX Hayate Otsu V2 XSOFT XL",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/207341563_-ninja-fx-hayate-otsu-v2-xsoft-xl-schwarz-artisan.html",
+  "offers": 1,
+  "date": "2026-09-23"
+ },
+ "mp-raiden": {
+  "price": 55.85,
+  "shop": "maxgaming.gg",
+  "product": "Artisan FX Raiden XSOFT XL",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/207338724_-ninja-fx-raiden-xsoft-xl-daidai-orange-artisan.html",
+  "offers": 1,
+  "date": "2026-09-23"
+ }
+};

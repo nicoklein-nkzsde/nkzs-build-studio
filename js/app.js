@@ -1,4 +1,5 @@
-import { CATALOG, SLOT_LABELS, TYPES, STATUS, KB, DEFAULT_KB, TEMPLATES, STAND } from './data.js';
+import { CATALOG, SLOT_LABELS, TYPES, STATUS, KB, DEFAULT_KB, TEMPLATES, USED_ADVICE, GAMES, TWEAKS } from './data.js';
+import { PRICES, CHECKED } from './prices.js';
 import { layoutKeys } from './layouts.js';
 import * as Viewer from './viewer.js';
 
@@ -39,14 +40,19 @@ function fromTemplate(t, customerId, name) {
 }
 
 // ---------- Katalog-Zugriff ----------
-const catalogFor = (slot) => [...(CATALOG[slot] || []), ...state.customParts.filter((p) => p.slot === slot)];
+const withCheck = (p) => { const c = PRICES[p.id]; return c ? { ...p, price: c.price ?? p.price, chk: c } : p; };
+const catalogFor = (slot) => [...(CATALOG[slot] || []).map(withCheck), ...state.customParts.filter((p) => p.slot === slot)];
+const fmtDate = (d) => d ? new Date(d).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' }) : '';
+const usedOk = (slot) => (USED_ADVICE[slot] || ['warn'])[0] !== 'no';
 const part = (slot, id) => catalogFor(slot).find((p) => p.id === id);
 const kbItem = (list, id) => KB[list].find((x) => x.id === id) || KB[list][0];
 function sel(b, slot) {
   const s = b.parts[slot];
   if (!s?.id) return null;
   const p = part(slot, s.id);
-  return p ? { ...p, qty: s.qty || 1, price: s.price ?? p.price, basePrice: p.price } : null;
+  if (!p) return null;
+  const isUsed = !!(s.used && p.chk?.used);
+  return { ...p, qty: s.qty || 1, price: s.price ?? (isUsed ? p.chk.used : p.price), basePrice: isUsed ? p.chk.used : p.price, newPrice: p.price, isUsed };
 }
 const curBuild = () => state.builds.find((b) => b.id === ui.buildId);
 const curCustomer = () => state.customers.find((c) => c.id === ui.customerId);
@@ -102,11 +108,23 @@ function lines(b) {
       kbLines(b.kb).forEach((l) => L.push({ ...l, slot, sub: true }));
       continue;
     }
-    L.push({ slot, label: SLOT_LABELS[slot], name: p.name, qty: p.qty, price: p.price });
+    L.push({ slot, label: SLOT_LABELS[slot] + (p.isUsed ? ' · gebraucht' : ''), name: p.name, qty: p.qty, price: p.price, newPrice: p.newPrice, used: p.chk?.used, isUsed: p.isUsed });
   }
   if (TYPES[b.type].kb) kbLines(b.kb).forEach((l) => L.push(l));
   return L;
 }
+// Vergleich: alles neu vs. gebraucht, wo sinnvoll und Daten vorhanden
+function compare(b) {
+  let allNew = 0, bestUsed = 0, n = 0;
+  for (const l of lines(b)) {
+    if (l.group) continue;
+    const nw = (l.newPrice ?? l.price) * l.qty;
+    allNew += nw;
+    if (l.slot && l.used && usedOk(l.slot) && l.slot !== 'keyboard') { bestUsed += l.used * l.qty; n++; } else bestUsed += nw;
+  }
+  return { allNew, bestUsed, saving: allNew - bestUsed, n };
+}
+
 function totals(b) {
   const parts = lines(b).reduce((s, l) => s + (l.group ? 0 : l.qty * l.price), 0);
   const markup = (parts * (+state.settings.markup || 0)) / 100;
@@ -150,6 +168,9 @@ function checks(b) {
   const kb = activeKb(b);
   if (kb && (TYPES[b.type].kb || sel(b, 'keyboard')?.custom)) {
     if (kb.capsId === 'kk-low') out.push({ level: 'warn', text: 'Low-Profile-Keycaps passen nicht auf normale MX-Switches.' });
+    const swi = kbItem('switches', kb.switchId), pcbi = kbItem('pcbs', kb.pcbId);
+    if (swi.magnetic && !pcbi.he) out.push({ level: 'error', text: 'Magnet-Switches brauchen ein Hall-Effect-PCB.' });
+    if (!swi.magnetic && pcbi.he) out.push({ level: 'error', text: 'Hall-Effect-PCB funktioniert nur mit Magnet-Switches.' });
     if (kb.pcbId === 'kpcb-solder' && (kb.extras || []).includes('kx-lube')) out.push({ level: 'info', text: 'Löt-PCB: Switches vor dem Einlöten lubben.' });
   }
   if (!out.some((o) => o.level === 'error' || o.level === 'warn')) out.unshift({ level: 'ok', text: 'Alles kompatibel.' });
@@ -277,10 +298,12 @@ function renderConfig() {
 
     <div class="section"><div class="checks">${ch.map((x) => `<div class="check ${x.level}"><i>${{ ok: '✓', warn: '!', error: '✕', info: 'i' }[x.level]}</i><span>${esc(x.text)}</span></div>`).join('')}</div></div>
 
-    ${t.slots.length ? `<div class="section"><div class="section-h"><span>Komponenten</span><span>Richtpreise ${STAND}</span></div>
+    ${t.slots.length ? `<div class="section"><div class="section-h"><span>Komponenten</span><span>${CHECKED ? `Preise geprüft ${fmtDate(CHECKED)}` : "Richtpreise"}</span></div>
       <div class="card">${t.slots.map((s) => slotRow(b, s)).join('')}</div></div>` : ''}
 
     ${(t.kb || sel(b, 'keyboard')?.custom) ? kbSection(b) : ''}
+    ${t.slots.length ? usedSection(b) : ''}
+    ${t.slots.includes('gpu') ? benchSection(b) : ''}
 
     <div class="section"><div class="section-h"><span>Preis</span></div>
       <div class="card sum">
@@ -324,16 +347,57 @@ function slotRow(b, slot) {
       <span class="info">${esc(p.info || '')}</span>
       <input class="mini" type="number" min="1" data-qty="${slot}" value="${p.qty}" title="Menge">×
       <input class="mini price" type="number" min="0" step="1" data-price="${slot}" value="${s.price ?? ''}" placeholder="${p.basePrice}" title="Eigener Preis (leer = Richtpreis)">€
-      <a href="https://geizhals.de/?fs=${encodeURIComponent(p.name)}" target="_blank" rel="noopener" title="Aktuellen Preis auf Geizhals prüfen">Preis ↗</a>
-    </div>` : p?.custom ? `<div class="slot-meta"><span class="info">Konfiguration unten · ${eur(kbPrice(b.kb))}</span></div>` : ''}
+    </div>${priceLine(slot, p, s)}` : p?.custom ? `<div class="slot-meta"><span class="info">Konfiguration unten · ${eur(kbPrice(b.kb))}</span></div>` : ''}
   </div>`;
+}
+
+function priceLine(slot, p, s) {
+  const c = p.chk;
+  const adv = USED_ADVICE[slot] || ['warn', ''];
+  const idealo = c?.url || `https://www.idealo.de/preisvergleich/MainSearchProductCategory.html?q=${encodeURIComponent(p.name)}`;
+  const ka = `https://www.kleinanzeigen.de/s-${encodeURIComponent(p.name.toLowerCase().replace(/\(.*?\)/g, '').trim().replace(/\s+/g, '-'))}/k0`;
+  const nw = c ? `<span class="pl-new" title="${esc(c.product || '')}">Neu ${eur(c.price)} · ${esc(c.shop || '')} · ${fmtDate(c.date)}</span>` : `<span class="pl-new warn">Richtpreis – noch nicht geprüft</span>`;
+  const used = c?.used
+    ? `<label class="pl-used ${adv[0]}" title="${esc(adv[1])}${c.usedN ? ` · ${c.usedN} Anzeigen` : ''}"><input type="checkbox" data-used="${slot}" ${s.used ? 'checked' : ''} ${adv[0] === 'no' ? 'disabled' : ''}>gebraucht ~${eur(c.used).replace(',00', '')} <b>−${Math.round((1 - c.used / c.price) * 100)} %</b></label>`
+    : `<span class="pl-used none">gebraucht: keine Daten</span>`;
+  return `<div class="price-line">${nw}${used}<a href="${idealo}" target="_blank" rel="noopener">idealo ↗</a><a href="${ka}" target="_blank" rel="noopener">Kleinanz. ↗</a></div>`;
+}
+
+function usedSection(b) {
+  const c = compare(b);
+  if (!c.n) return '';
+  return `<div class="section"><div class="section-h"><span>Neu vs. Gebraucht</span><span>Stand ${fmtDate(CHECKED)}</span></div>
+    <div class="card sum">
+      <div class="sum-row"><span>Alles neu (günstigster geprüfter Preis)</span><span>${eur(c.allNew)}</span></div>
+      <div class="sum-row"><span>Gebraucht, wo sinnvoll (${c.n} Teile)</span><span>${eur(c.bestUsed)}</span></div>
+      <div class="sum-total" style="font-size:15px"><span>Ersparnis gebraucht</span><span style="color:var(--ok)">−${eur(c.saving)} (${Math.round((c.saving / c.allNew) * 100)} %)</span></div>
+      <div class="hint" style="margin-top:6px">Gebrauchtpreise = Median aktueller Kleinanzeigen-Angebote (VB, meist noch verhandelbar). Netzteil, SSD und Mauspad bleiben immer neu.</div>
+      <div class="btns" style="margin-top:10px"><button class="btn" data-act="used-all">Gebraucht übernehmen, wo sinnvoll</button><button class="btn" data-act="used-none">Alles neu</button></div>
+      <label class="chk" style="margin-top:6px"><input type="checkbox" data-f="quoteUsed" ${b.quoteUsed ? 'checked' : ''}> Vergleich im Angebot zeigen</label>
+    </div></div>`;
+}
+
+function benchSection(b) {
+  const bn = b.bench || {};
+  const g = bn.games || {};
+  const num = (gid, k, f) => `<input class="mini" type="number" min="0" step="1" data-bench="${gid}.${k}.${f}" value="${g[gid]?.[k]?.[f] ?? ''}" placeholder="–">`;
+  const gain = (gid) => { const a = g[gid]?.stock?.avg, t = g[gid]?.tuned?.avg; return a && t ? `<b style="color:${t >= a ? 'var(--ok)' : 'var(--err)'}">${t >= a ? '+' : ''}${Math.round((t / a - 1) * 100)} %</b>` : ''; };
+  const tw = bn.tweaks || {};
+  return `<div class="section"><div class="section-h"><span>Benchmarks (selbst gemessen)</span><span><select class="mini" style="width:auto" data-benchf="res">${['1080p', '1440p', '4K'].map((r) => `<option ${r === (bn.res || '1080p') ? 'selected' : ''}>${r}</option>`).join('')}</select></span></div>
+    <div class="card bench">
+      <div class="bench-row bench-head"><span>Spiel</span><span>Serie Ø</span><span>1 % Low</span><span>Getweakt Ø</span><span>1 % Low</span><span></span></div>
+      ${GAMES.map((x) => `<div class="bench-row"><span title="${esc(x.how)}">${x.name}<small>${x.preset}</small></span>${num(x.id, 'stock', 'avg')}${num(x.id, 'stock', 'low')}${num(x.id, 'tuned', 'avg')}${num(x.id, 'tuned', 'low')}<span>${gain(x.id)}</span></div>`).join('')}
+      <div class="bench-tweaks">${TWEAKS.map((t) => `<label class="chk"><input type="checkbox" data-tweak="${t.id}" ${tw[t.id] ? 'checked' : ''}>${t.name}${t.input ? ` <input class="mini" style="width:56px" type="number" step="0.1" data-tweakv="${t.id}" value="${tw[t.id + '_v'] ?? ''}" placeholder="${t.input}">` : ''}${t.note ? `<span class="p">${t.note}</span>` : ''}</label>`).join('')}</div>
+      <div class="row2" style="padding:0 12px 12px"><div class="field"><label>Gemessen mit</label><input data-benchf="tool" value="${esc(bn.tool || '')}" placeholder="CapFrameX / PresentMon"></div><div class="field"><label>Datum</label><input type="date" data-benchf="date" value="${esc(bn.date || '')}"></div></div>
+      <div class="hint" style="padding:0 12px 12px">Nur echte Messwerte eintragen – gleiche Szene, 3 Durchläufe, Ø nehmen. Die Werte landen im Angebot als Beweis, was deine Tweaks bringen.</div>
+    </div></div>`;
 }
 
 function kbSection(b) {
   const kb = b.kb;
   const lay = layoutKeys(kb.layout);
   const sw = kbItem('switches', kb.switchId);
-  const selK = (list, key) => `<select class="big" data-kb="${key}">${KB[list].filter((x) => list !== 'caps' || x.id !== 'kk-low').map((x) => `<option value="${x.id}" ${x.id === kb[key] ? 'selected' : ''}>${esc(x.name)} · ${eur(x.price).replace(',00', '')}${list === 'switches' ? '/Stk' : ''}</option>`).join('')}</select>`;
+  const selK = (list, key) => `<select class="big" data-kb="${key}">${KB[list].filter((x) => list !== 'caps' || x.id !== 'kk-low').map((x) => `<option value="${x.id}" ${x.id === kb[key] ? 'selected' : ''}>${esc(x.name)} · ${eur(x.price).replace(',00', '')}${list === 'switches' ? '/Stk' : ''}${x.unchecked ? ' (Preis prüfen)' : ''}</option>`).join('')}</select>`;
   const col = (k, label) => `<div class="color"><input type="color" data-color="${k}" value="${kb.colors[k]}">${label}</div>`;
   return `<div class="section"><div class="section-h"><span>Tastatur-Konfigurator</span><span>${lay.count} Tasten · ${eur(kbPrice(kb))}</span></div>
     <div class="card kb-grid">
@@ -476,6 +540,25 @@ function shoppingModal() {
     <div class="btns"><button class="btn" data-act="copy-list">Als Text kopieren</button></div>`, { wide: true });
 }
 
+function quoteExtras(b) {
+  let h = '';
+  const g = b.bench?.games || {};
+  const rows = GAMES.filter((x) => g[x.id]?.stock?.avg || g[x.id]?.tuned?.avg);
+  if (rows.length) {
+    const tw = TWEAKS.filter((t) => b.bench?.tweaks?.[t.id]).map((t) => t.name + (t.input && b.bench.tweaks[t.id + '_v'] ? ` ${b.bench.tweaks[t.id + '_v']} ${t.input}` : ''));
+    h += `<h3 style="margin:22px 0 6px;font-size:14px">Gemessene Leistung (${esc(b.bench.res || '1080p')})</h3>
+      <table><thead><tr><th>Spiel</th><th class="r">Serie Ø / 1 % Low</th><th class="r">NKZS-getweakt Ø / 1 % Low</th><th class="r">Plus</th></tr></thead><tbody>
+      ${rows.map((x) => { const s = g[x.id].stock || {}, t = g[x.id].tuned || {}; return `<tr><td>${x.name}<span class="cat">${x.preset}</span></td><td class="r">${s.avg ?? '–'} / ${s.low ?? '–'} FPS</td><td class="r">${t.avg ?? '–'} / ${t.low ?? '–'} FPS</td><td class="r">${s.avg && t.avg ? `+${Math.round((t.avg / s.avg - 1) * 100)} %` : ''}</td></tr>`; }).join('')}
+      </tbody></table>
+      <div style="color:#666;font-size:11px;margin-top:6px">Selbst gemessen${b.bench.tool ? ` mit ${esc(b.bench.tool)}` : ''}${b.bench.date ? ` am ${new Date(b.bench.date).toLocaleDateString('de-DE')}` : ''}. ${tw.length ? `Tweaks: ${esc(tw.join(', '))}.` : ''}</div>`;
+  }
+  if (b.quoteUsed) {
+    const c = compare(b);
+    if (c.n) h += `<div style="margin-top:18px;padding:12px 14px;background:#f5f5f7;border-radius:8px"><b>Spar-Option gebraucht:</b> Mit geprüften Gebrauchtteilen (${c.n} Teile, z. B. CPU/GPU) läge der Teilepreis bei ca. <b>${eur(c.bestUsed)}</b> statt ${eur(c.allNew)} – also rund <b>${eur(c.saving)}</b> günstiger. Netzteil & SSD immer neu.</div>`;
+  }
+  return h;
+}
+
 function quoteHtml(b, img) {
   const s = state.settings;
   const c = state.customers.find((x) => x.id === b.customerId) || {};
@@ -504,6 +587,7 @@ function quoteHtml(b, img) {
       ${tot.units > 1 ? `<div><span>Pro System</span><span>${eur(tot.unit)}</span></div><div><span>Anzahl</span><span>× ${tot.units}</span></div>` : ''}
       <div class="tot"><span>Gesamtbetrag</span><span>${eur(tot.total)}</span></div>
     </div>
+    ${quoteExtras(b)}
     ${b.notes ? `<p style="margin-top:18px"><b>Hinweise:</b> ${esc(b.notes)}</p>` : ''}
     <div class="q-foot">
       ${s.kleinunternehmer ? 'Gemäß § 19 UStG wird keine Umsatzsteuer berechnet.<br>' : ''}
@@ -568,6 +652,8 @@ document.addEventListener('click', (e) => {
       return;
     }
     case 'quote': return quoteModal();
+    case 'used-all': return update((b) => { for (const slot of TYPES[b.type].slots) { const p = sel(b, slot); if (p?.chk?.used && usedOk(slot) && slot !== 'keyboard') b.parts[slot].used = true; } });
+    case 'used-none': return update((b) => { for (const s of Object.values(b.parts)) s.used = false; });
     case 'print': state.settings.quoteNo++; save(); window.print(); return;
     case 'shopping': return shoppingModal();
     case 'copy-list': {
@@ -612,12 +698,18 @@ document.addEventListener('change', (e) => {
   if (d.qty) return update((b) => (b.parts[d.qty].qty = Math.max(1, +t.value || 1)));
   if (d.price !== undefined) return update((b) => (b.parts[d.price].price = t.value === '' ? null : +t.value), { view: false });
   if (d.kb) return update((b) => (b.kb[d.kb] = t.value));
+  if (d.used) return update((b) => (b.parts[d.used].used = t.checked));
+  if (d.bench) { const [gid, k, f] = d.bench.split('.'); return update((b) => { b.bench ??= {}; b.bench.games ??= {}; b.bench.games[gid] ??= {}; b.bench.games[gid][k] ??= {}; b.bench.games[gid][k][f] = t.value === '' ? null : +t.value; }, { view: false }); }
+  if (d.benchf) return update((b) => { b.bench ??= {}; b.bench[d.benchf] = t.value; }, { view: false });
+  if (d.tweak) return update((b) => { b.bench ??= {}; b.bench.tweaks ??= {}; b.bench.tweaks[d.tweak] = t.checked; }, { view: false });
+  if (d.tweakv) return update((b) => { b.bench ??= {}; b.bench.tweaks ??= {}; b.bench.tweaks[d.tweakv + '_v'] = t.value; b.bench.tweaks[d.tweakv] = true; }, { view: false });
   if (d.extra) return update((b) => { const s = new Set(b.kb.extras || []); t.checked ? s.add(d.extra) : s.delete(d.extra); b.kb.extras = [...s]; });
   if (d.color) return update((b) => { if (d.color === 'case') b.kb.caseColor = t.value; else b.kb.colors[d.color] = t.value; });
   if (d.f) {
     return update((b) => {
       if (d.f === 'units') b.units = Math.max(1, +t.value || 1);
       else if (d.f === 'service') b.service = t.value === '' ? null : +t.value;
+      else if (d.f === 'quoteUsed') b.quoteUsed = t.checked;
       else b[d.f] = t.value;
     }, { view: false });
   }

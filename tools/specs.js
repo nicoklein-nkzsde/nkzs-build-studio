@@ -1,0 +1,138 @@
+// Suchregeln für den Preis-Check (idealo neu + Kleinanzeigen gebraucht).
+// q = Suchbegriff, m = muss im Titel stehen (normalisiert: klein, ohne Leer-/Sonderzeichen),
+// x = darf nicht im Titel stehen, n = wie viele passende Produkte vergleichen (z. B. GPU-Modelle verschiedener Hersteller)
+// Teile ohne Eintrag (Lizenzen, Dienstleistungen, generische Teile) werden nicht automatisch geprüft.
+export const SPECS = {
+  'cpu-7600': { q: 'AMD Ryzen 5 7600 boxed', m: ['ryzen57600'], x: ['oem', 'mpk', '7600x', 'tray', 'x3d'] },
+  'cpu-9600x': { q: 'AMD Ryzen 5 9600X', m: ['9600x'], x: ['oem', 'mpk', 'tray', 'x3d'] },
+  'cpu-7800x3d': { q: 'AMD Ryzen 7 7800X3D boxed', m: ['7800x3d'], x: ['oem', 'mpk', 'tray', 'einschub', '100000000910'] },
+  'cpu-9800x3d': { q: 'AMD Ryzen 7 9800X3D', m: ['9800x3d'], x: ['oem', 'mpk', 'tray'] },
+  'cpu-9950x': { q: 'AMD Ryzen 9 9950X', m: ['9950x'], x: ['oem', 'mpk', 'tray', '9950x3d'] },
+  'cpu-14400f': { q: 'Intel Core i5-14400F', m: ['14400f'], x: ['oem', 'mpk', 'tray'] },
+  'cpu-245k': { q: 'Intel Core Ultra 5 245K', m: ['245k'], x: ['oem', 'mpk', 'tray', '245kf'] },
+  'cpu-265k': { q: 'Intel Core Ultra 7 265K', m: ['265k'], x: ['oem', 'mpk', 'tray', '265kf'] },
+  'cpu-285k': { q: 'Intel Core Ultra 9 285K', m: ['285k'], x: ['oem', 'mpk', 'tray'] },
+
+  'cool-pa120': { q: 'Thermalright Peerless Assassin 120 SE', m: ['peerlessassassin120se'], x: ['argb', 'white', 'weiß', 'digital'] },
+  'cool-d15': { q: 'Noctua NH-D15 G2', m: ['nhd15g2'], x: ['chromax', 'lbc', 'hbc'] },
+  'cool-drp5': { q: 'be quiet Dark Rock Pro 5', m: ['darkrockpro5'], x: [] },
+  'cool-l12': { q: 'Noctua NH-L12Sx77', m: ['nhl12sx77'], x: [] },
+  'cool-lf360': { q: 'Arctic Liquid Freezer III Pro 360', m: ['liquidfreezeriiipro', '360'], x: ['argb', 'white', 'weiß', '420', '240'] },
+  'cool-lf360w': { q: 'Arctic Liquid Freezer III Pro 360 A-RGB weiß', m: ['liquidfreezeriiipro', '360', 'argb', 'white|weiß|weiss'], x: ['420', '240'] },
+  'cool-kr240': { q: 'NZXT Kraken 240 RGB', m: ['kraken240rgb'], x: ['elite', 'white', 'weiß'] },
+
+  'mb-b650tw': { q: 'MSI MAG B650 Tomahawk WiFi', m: ['b650tomahawkwifi'], x: [] },
+  'mb-b650mtuf': { q: 'ASUS TUF Gaming B650M-Plus WiFi', m: ['tufgamingb650mpluswifi'], x: ['ii'] },
+  'mb-b650i': { q: 'Gigabyte B650I AX', m: ['b650iax'], x: [] },
+  'mb-x870e': { q: 'ASUS ROG Strix X870E-E Gaming WiFi', m: ['x870eegamingwifi'], x: [] },
+  'mb-x870w': { q: 'ASUS ROG Strix X870-A Gaming WiFi', m: ['x870agamingwifi'], x: [] },
+  'mb-b760d4': { q: 'MSI PRO B760-P WiFi DDR4', m: ['b760pwifiddr4'], x: ['ii'] },
+  'mb-b760m': { q: 'Gigabyte B760M DS3H DDR5', m: ['b760mds3h'], x: ['ddr4', 'ax'] },
+  'mb-z890': { q: 'ASUS TUF Gaming Z890-Plus WiFi', m: ['tufgamingz890pluswifi'], x: [] },
+  'mb-b860m': { q: 'MSI B860M Gaming Plus WiFi', m: ['b860mgamingpluswifi'], x: [] },
+
+  'ram-16-5600': { q: 'Kingston Fury Beast 16GB DDR5-5600 Kit 2x8GB', m: ['furybeast', '16gb', '5600', 'k2|2x8|kit'], x: ['rgb', 'white', '1x16', 'sodimm', '6000'] },
+  'ram-32-6000': { q: 'Corsair Vengeance 32GB DDR5-6000 CL30 Kit', m: ['vengeance', '32gb', '6000', 'cl30'], x: ['rgb', 'white', 'sodimm', '1x32'] },
+  'ram-32-rgb': { q: 'G.Skill Trident Z5 RGB 32GB DDR5-6400 Kit', m: ['tridentz5rgb', '32gb', '6400'], x: ['neo', 'royal'] },
+  'ram-32-rgbw': { q: 'Corsair Vengeance RGB 32GB Kit DDR5-6000 CL30 CMH32GX5M2B6000C30W', m: ['vengeance', 'rgb', '32gb', '6000', 'c30w|z30w|white|weiß|weiss'], x: ['sodimm', 'cl36', 'grey'], n: 3 },
+  'ram-64-6000': { q: 'Kingston Fury Beast 64GB DDR5-6000 Kit', m: ['furybeast', '64gb', '6000'], x: ['rgb', 'white', 'sodimm'] },
+  'ram-128': { q: 'Corsair Vengeance DDR5 128GB Kit', m: ['vengeance', '128gb'], x: ['rgb', 'sodimm'], n: 3 },
+  'ram-32-d4': { q: 'Corsair Vengeance LPX 32GB DDR4-3200 Kit', m: ['vengeancelpx', '32gb', '3200'], x: ['1x32', 'sodimm'] },
+
+  // Grafikkarten: n>1 → günstigstes geprüftes Modell irgendeines Herstellers
+  'gpu-5060': { q: 'GeForce RTX 5060 8GB', m: ['rtx5060'], x: ['5060ti', 'laptop', 'notebook'], n: 5 },
+  'gpu-5060ti': { q: 'GeForce RTX 5060 Ti 16GB', m: ['rtx5060ti', '16gb'], x: ['laptop'], n: 5 },
+  'gpu-9060xt': { q: 'Radeon RX 9060 XT 16GB', m: ['9060xt', '16'], x: ['8gb', 'white'], n: 6 },
+  'gpu-5070': { q: 'GeForce RTX 5070 12GB', m: ['rtx5070'], x: ['5070ti', 'laptop'], n: 5 },
+  'gpu-9070': { q: 'Radeon RX 9070 16GB', m: ['rx9070'], x: ['9070xt', '9070gre'], n: 5 },
+  'gpu-9070xt': { q: 'Radeon RX 9070 XT', m: ['9070xt'], x: [], n: 5 },
+  'gpu-5070ti': { q: 'GeForce RTX 5070 Ti 16GB', m: ['rtx5070ti'], x: ['laptop', 'white', 'weiß'], n: 5 },
+  'gpu-5070tiw': { q: 'GeForce RTX 5070 Ti White', m: ['rtx5070ti', 'white|weiß|weiss'], x: ['laptop'], n: 5 },
+  'gpu-5080': { q: 'GeForce RTX 5080 16GB', m: ['rtx5080'], x: ['laptop'], n: 5 },
+  'gpu-5090': { q: 'GeForce RTX 5090', m: ['rtx5090'], x: ['laptop', 'alphacool', 'backplate', 'xgmobile', 'aibox'], n: 10 },
+
+  'ssd-sn850x-1': { q: 'WD Black SN850X 1TB', m: ['sn850x', '1tb'], x: ['heatsink', 'kühlkörper'] },
+  'ssd-p3p-2': { q: 'Crucial P3 Plus 2TB', m: ['p3plus', '2tb'], x: [] },
+  'ssd-990-2': { q: 'Samsung 990 Pro 2TB', m: ['990pro', '2tb'], x: ['heatsink', 'kühlkörper'] },
+  'ssd-990-4': { q: 'Samsung 990 Pro 4TB', m: ['990pro', '4tb'], x: ['heatsink', 'kühlkörper'] },
+  'ssd-t705-2': { q: 'Crucial T705 2TB', m: ['t705', '2tb'], x: ['heatsink', 'kühlkörper'] },
+
+  'psu-pp12-750': { q: 'be quiet Pure Power 13 M 750W', m: ['purepower13m', '750'], x: [] },
+  'psu-rm850x': { q: 'Corsair RM850x', m: ['rm850x'], x: ['shift', 'white'] },
+  'psu-gx1000': { q: 'Seasonic Focus GX ATX 3 1000W', m: ['focusgx', '1000'], x: ['weiß', 'white', 'core'] },
+  'psu-dp13': { q: 'be quiet Dark Power 13 1000W', m: ['darkpower13', '1000'], x: [] },
+  'psu-rm1200': { q: 'Corsair RM1200x Shift', m: ['rm1200xshift'], x: ['white'] },
+  'psu-sf750': { q: 'Corsair SF750', m: ['sf750'], x: [] },
+  'psu-sf1000': { q: 'Corsair SF1000', m: ['sf1000'], x: [] },
+
+  'case-o11b': { q: 'Lian Li O11D EVO RGB schwarz', m: ['o11devorgb|o11dynamicevorgb'], x: ['white', 'weiß', 'xl'] },
+  'case-o11w': { q: 'Lian Li O11D EVO RGB weiß', m: ['o11devorgb|o11dynamicevorgb', 'white|weiß|weiss'], x: ['xl', 'black', 'schwarz'] },
+  'case-north': { q: 'Fractal Design North Charcoal Black', m: ['north', 'charcoal'], x: ['xl', 'white', 'chalk'] },
+  'case-h6': { q: 'NZXT H6 Flow weiß', m: ['h6flow', 'white|weiß|weiss'], x: ['rgb', 'black', 'schwarz'] },
+  'case-4000d': { q: 'Corsair 4000D Airflow', m: ['4000dairflow'], x: ['white', 'weiß', 'rgbairflow', '4000drgb'] },
+  'case-4000dw': { q: 'Corsair 4000D Airflow weiß', m: ['4000dairflow', 'white|weiß|weiss'], x: ['black', 'schwarz', 'rgb'] },
+  'case-d31': { q: 'Jonsbo D31 Mesh schwarz', m: ['d31mesh'], x: ['white', 'weiß', 'screen'] },
+  'case-a4h2o': { q: 'Lian Li A4-H2O', m: ['a4h2o'], x: [] },
+  'case-terra': { q: 'Fractal Design Terra', m: ['terra'], x: [] },
+
+  'mini-mac16': { q: 'Apple Mac mini M6 MHQK4ZD/A', m: ['macmini', 'm6'], x: ['m6pro', '512', '24gb', '32gb'] },
+  'mini-mac24': { q: 'Apple Mac mini M6 MHQM4ZD/A', m: ['macmini', 'm6'], x: ['m6pro', '256', '16gb', '32gb'] },
+  'mini-macpro': { q: 'Apple Mac mini M6 Pro', m: ['macmini', 'm6pro'], x: [], n: 3 },
+  'mini-m70q': { q: 'Lenovo ThinkCentre M70q Gen 5 i5 16GB 512GB', m: ['m70q', 'gen5', '512', '16gb'], x: [], n: 4 },
+  'mini-hp800': { q: 'HP Elite Mini 800 G9 i5 16GB 512GB', m: ['elitemini800g9', '512', '16'], x: [], n: 4 },
+  'mini-dell7020': { q: 'Dell Pro Micro Desktop QCM1250 7YMHK', m: ['promicro', 'qcm1250'], x: [], n: 3 },
+  'mini-um890': { q: 'Minisforum UM890 Pro 32GB 1TB', m: ['um890pro'], x: ['barebone'], n: 3 },
+  'mini-ser8': { q: 'Beelink SER8 32GB 1TB', m: ['ser8'], x: ['barebone'], n: 3 },
+
+  'mon-dells27': { q: 'Dell S2725DS', m: ['s2725ds'], x: [] },
+  'mon-u2724d': { q: 'Dell UltraSharp U2724D', m: ['u2724d'], x: ['u2724de'] },
+  'mon-lg32uhd': { q: 'LG UltraFine 32U720A-B', m: ['32u720a'], x: [] },
+  'mon-g5': { q: 'Samsung Odyssey G5 27 WQHD', m: ['odyssey', 'g5', '27'], x: ['32', 'g55', 'oled'], n: 4 },
+  'mon-lgoled': { q: 'LG UltraGear 27GS95QE', m: ['27gs95qe'], x: [] },
+  'mon-pg27': { q: 'ASUS ROG Swift PG27UCDM', m: ['pg27ucdm'], x: [] },
+  'mon-g8uw': { q: 'Samsung Odyssey OLED G8 34 S34DG850', m: ['odyssey', 'g8', '34'], x: ['32'], n: 3 },
+  'mon-studio': { q: 'Apple Studio Display Standardglas', m: ['studiodisplay'], x: ['nano'] },
+
+  'kb-q1max': { q: 'Keychron Q1 Max', m: ['q1max'], x: [] },
+  'kb-80he': { q: 'Wooting 80HE', m: ['wooting80he'], x: ['barebone'] },
+  'kb-g915': { q: 'Logitech G915 X TKL', m: ['g915x', 'tkl'], x: [] },
+  'kb-60he': { q: 'Wooting 60HE+', m: ['wooting60he'], x: ['module', 'case', 'barebone'] },
+  'kb-q1he': { q: 'Keychron Q1 HE', m: ['q1he'], x: ['barebone'] },
+  'kb-hv3': { q: 'Razer Huntsman V3 Pro TKL', m: ['huntsmanv3pro', 'tkl'], x: ['mini', 'white', 'weiß'] },
+  'kb-mxkeys': { q: 'Logitech MX Keys S', m: ['mxkeyss'], x: ['combo', 'mini', 'mac'] },
+  'kb-magic': { q: 'Apple Magic Keyboard Touch ID Ziffernblock deutsch', m: ['magickeyboard', 'touchid', 'ziffernblock'], x: ['norwegisch', 'englisch', 'us', 'französisch', 'schwedisch', 'dänisch', 'spanisch', 'italienisch'] },
+  'kb-bw75': { q: 'Razer BlackWidow V4 75% weiß', m: ['blackwidowv475', 'white|weiß|weiss'], x: [] },
+
+  'ms-gpxs2b': { q: 'Logitech G Pro X Superlight 2', m: ['proxsuperlight2'], x: ['dex', 'white', 'weiß', 'pink', 'magenta', 'superlight2se'] },
+  'ms-gpxs2w': { q: 'Logitech G Pro X Superlight 2 weiß', m: ['proxsuperlight2', 'white|weiß|weiss'], x: ['dex', 'black', 'schwarz', 'superlight2se'] },
+  'ms-dav3': { q: 'Razer DeathAdder V3 Pro', m: ['razer', 'deathadderv3pro'], x: ['hyperspeed', 'fortnite', 'edition'] },
+  'ms-x2v2': { q: 'Pulsar X2V2', m: ['pulsar', 'x2v2'], x: ['mini', 'wired', 'inosuke', 'tanjiro'] },
+  'ms-g305': { q: 'Logitech G305 Lightspeed', m: ['logitech', 'g305'], x: [] },
+  'ms-mx3s': { q: 'Logitech MX Master 3S', m: ['logitech', 'mxmaster3s'], x: ['mac', 'combo'] },
+  'ms-magic': { q: 'Apple Magic Mouse', m: ['magicmouse'], x: [] },
+
+  'mp-zero': { q: 'Artisan FX Zero XSOFT XL', m: ['artisan', 'zero', 'xl'], x: ['xxl', 'soft l', 'mid'], n: 3 },
+  'mp-hayate': { q: 'Artisan FX Hayate Otsu XSOFT XL', m: ['artisan', 'hayateotsu', 'xl'], x: ['xxl', 'mid'], n: 3 },
+  'mp-raiden': { q: 'Artisan FX Raiden XSOFT XL', m: ['artisan', 'raiden', 'xl'], x: ['xxl', 'mid'], n: 3 },
+  'mp-hien': { q: 'Artisan Hien Soft XL', m: ['hien'], x: [] },
+  'mp-g840': { q: 'Logitech G840 XL', m: ['g840'], x: [] },
+  'mp-qck': { q: 'SteelSeries QcK Heavy XXL', m: ['qckheavy', 'xxl'], x: [] },
+  'mp-strider': { q: 'Razer Strider XXL', m: ['strider', 'xxl'], x: ['chroma'] },
+
+  'hs-cloud3': { q: 'HyperX Cloud III', m: ['cloudiii'], x: ['wireless', 'cloudiiis'] },
+  'hs-novapro': { q: 'SteelSeries Arctis Nova Pro Wireless', m: ['arctisnovaprowireless'], x: ['xbox'] },
+  'hs-hd560': { q: 'Sennheiser HD 560S', m: ['hd560s'], x: [] },
+  'hs-zone': { q: 'Logitech Zone Vibe 100', m: ['zonevibe100'], x: [] },
+  'hs-jabra': { q: 'Jabra Evolve2 65', m: ['evolve265'], x: ['flex'], n: 3 },
+
+  'cam-c920': { q: 'Logitech C920s', m: ['c920s'], x: [] },
+  'cam-face2': { q: 'Elgato Facecam MK.2', m: ['facecammk2'], x: [] },
+  'cam-brio': { q: 'Logitech Brio 4K', m: ['brio'], x: ['300', '500', '100', '505', '105'] },
+};
+
+// Wörter, die immer auf falsches Produkt / nicht neu hindeuten
+export const BAD = ['bundle', 'aufrüst', 'aufruest', 'gamingpc', 'komplettpc', 'pcsystem', 'gebraucht', 'bware', 'refurb', 'generalüberholt', 'generalueberholt', 'defekt', 'ersatzteil', 'notebook', 'laptop',
+  // Zubehör statt Produkt
+  'iokit', 'kitfor', 'skates', 'skate', 'superglide', 'glides', 'grips', 'bracket', 'halterung', 'adapter', 'mausfüße', 'mausfuesse', 'sticker', 'hülle', 'staubschutz', 'ersatzkabel', 'kompatibelmit'];
+// zusätzlich bei Kleinanzeigen
+export const BAD_USED = ['gesuch', 'suche ', 'tausche', 'ankauf', 'kaufe ', 'pc ', 'gamingpc', 'gaming-pc', 'rechner', 'komplett', 'bundle', 'set ', 'defekt', 'ovp leer', 'nur karton', 'nur verpackung'];

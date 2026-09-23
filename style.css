@@ -224,3 +224,25 @@ textarea { resize: vertical; min-height: 64px; }
   #config { border-right: 0; }
   #stage { height: 60vh; }
 }
+
+/* Preis-Check & Gebraucht */
+.price-line { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin-top: 6px; font-size: 11.5px; }
+.price-line a { color: var(--dim); text-decoration: none; }
+.price-line a:hover { color: var(--accent-2); }
+.pl-new { color: var(--muted); }
+.pl-new.warn { color: var(--warn); }
+.pl-used { display: inline-flex; align-items: center; gap: 5px; border-radius: 20px; padding: 2px 8px 2px 5px; background: var(--panel-2); color: var(--muted); cursor: pointer; }
+.pl-used input { accent-color: var(--ok); margin: 0; }
+.pl-used b { color: var(--ok); font-weight: 600; }
+.pl-used.warn b { color: var(--warn); }
+.pl-used.no { opacity: .55; cursor: not-allowed; }
+.pl-used.no b { color: var(--dim); }
+.pl-used.none { background: none; color: var(--dim); padding-left: 0; }
+
+/* Benchmarks */
+.bench-row { display: grid; grid-template-columns: 1.6fr repeat(4, 58px) 44px; gap: 6px; align-items: center; padding: 7px 12px; border-bottom: 1px solid var(--line); }
+.bench-row .mini { width: 100%; }
+.bench-row small { display: block; color: var(--dim); font-size: 10.5px; }
+.bench-head { color: var(--dim); font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em; }
+.bench-tweaks { padding: 10px 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+.bench-tweaks .chk { font-size: 11.5px; }
