@@ -13,6 +13,17 @@ const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '
 const clone = (o) => JSON.parse(JSON.stringify(o));
 const $ = (s) => document.querySelector(s);
 
+// Design: standardmäßig das helle Profi-Design, umschaltbar (gemerkt pro Browser)
+const THEME_KEY = 'nkzs-theme';
+const savedTheme = (() => { try { return localStorage.getItem(THEME_KEY); } catch { return null; } })();
+document.documentElement.dataset.theme = savedTheme || 'light';
+function toggleTheme() {
+  const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = t;
+  try { localStorage.setItem(THEME_KEY, t); } catch {}
+  renderTopbar();
+}
+
 let state = load();
 state.settings = { webFee: 50, requestEmail: 'nicoklein@nkzs.de', ...state.settings };
 const ui = { customerId: null, buildId: null, view: null, rgb: false, autoRotate: false, sound: true, search: '', typed: '' };
@@ -448,6 +459,7 @@ function renderTopbar() {
     <div class="tb-actions">
       <span id="tb-save" class="tb-save"><i></i><span></span></span>
       ${b ? '<button class="btn primary" data-act="quote">Angebot</button>' : ''}
+      <button class="btn ghost" data-act="theme" title="Helles/dunkles Design">${document.documentElement.dataset.theme === 'dark' ? 'Hell' : 'Dunkel'}</button>
       <button class="btn ghost" data-act="settings">Einstellungen</button>
       <button class="btn ghost" data-act="backup">Backup</button>
     </div>`;
@@ -1139,6 +1151,7 @@ document.addEventListener('click', (e) => {
     }
     case 'kbdemo': return playDemo();
     case 'autofill': return update((b) => autoFill(b));
+    case 'theme': return toggleTheme();
     case 'quote': return quoteModal();
     case 'request': return requestModal();
     case 'used-all': return update((b) => { for (const slot of TYPES[b.type].slots) { const p = sel(b, slot); if (p?.chk?.used && usedOk(slot) && slot !== 'keyboard') b.parts[slot].used = true; } });
