@@ -14,7 +14,7 @@ const clone = (o) => JSON.parse(JSON.stringify(o));
 const $ = (s) => document.querySelector(s);
 
 let state = load();
-const ui = { customerId: null, buildId: null, view: null, rgb: true, autoRotate: false, sound: true, search: '', typed: '' };
+const ui = { customerId: null, buildId: null, view: null, rgb: false, autoRotate: false, sound: true, search: '', typed: '' };
 
 function seed() {
   const me = { id: uid(), name: 'Meine Sammlung', company: 'Eigene Builds & Tastaturen', email: '', phone: '', address: '', notes: '', created: Date.now() };
@@ -30,7 +30,83 @@ function load() {
   try { const s = JSON.parse(localStorage.getItem(LS)); if (s?.customers) return s; } catch {}
   return seed();
 }
-function save() { try { localStorage.setItem(LS, JSON.stringify(state)); } catch {} }
+function save() { try { localStorage.setItem(LS, JSON.stringify(state)); } catch {} scheduleSync(); }
+
+// ---------- Online-Speicher (Artifact-db) ----------
+// Läuft die Seite als claude.ai-Artifact, landen Kunden & Builds im Online-Speicher; lokal bleibt es im Browser.
+const cap = (name) => (window.claude?.use ? window.claude.use(name).catch(() => null) : Promise.resolve(null));
+let db = null, dbReady = false, syncTimer = null, syncing = false, saveState = 'local';
+const synced = { customers: {}, builds: {}, parts: {}, settings: '' };
+function setSaveState(s) { saveState = s; const el = $('#tb-save'); if (el) { el.className = 'tb-save' + (s === 'cloud' ? ' cloud' : ''); el.lastChild.textContent = { cloud: 'Online gespeichert', local: 'Nur in diesem Browser', saving: 'Speichert …', error: 'Speichern fehlgeschlagen' }[s]; } }
+function scheduleSync() { if (!dbReady) return; setSaveState('saving'); clearTimeout(syncTimer); syncTimer = setTimeout(pushAll, 700); }
+async function pushAll() {
+  if (!db) return;
+  if (syncing) return scheduleSync();
+  syncing = true;
+  try {
+    for (const [col, list] of [['customers', state.customers], ['builds', state.builds], ['parts', state.customParts]]) {
+      const seen = new Set();
+      for (const item of list) {
+        const j = JSON.stringify(item);
+        seen.add(item.id);
+        if (synced[col][item.id] !== j) { await db.doc(`${col}/${item.id}`).set(JSON.parse(j)); synced[col][item.id] = j; }
+      }
+      for (const id of Object.keys(synced[col])) if (!seen.has(id)) { await db.doc(`${col}/${id}`).delete(); delete synced[col][id]; }
+    }
+    const sj = JSON.stringify(state.settings);
+    if (synced.settings !== sj) { await db.doc('config/settings').set(JSON.parse(sj)); synced.settings = sj; }
+    setSaveState('cloud');
+  } catch (e) {
+    setSaveState('error');
+    toast(e?.code === 'quota_exceeded' ? 'Online-Speicher ist voll – alte Builds löschen.' : 'Speichern fehlgeschlagen – Änderungen bleiben in diesem Browser.');
+  } finally { syncing = false; }
+}
+async function initDb() {
+  db = await cap('db');
+  if (!db) return setSaveState('local');
+  try {
+    const [cs, bs, ps, st] = await Promise.all([db.collection('customers').get(), db.collection('builds').get(), db.collection('parts').get(), db.doc('config/settings').get()]);
+    dbReady = true;
+    if (cs.empty && bs.empty) { await pushAll(); return; }
+    const plain = (d) => JSON.parse(JSON.stringify(d.data()));
+    state = {
+      customers: cs.docs.map(plain).sort((a, b) => (b.created || 0) - (a.created || 0)),
+      builds: bs.docs.map(plain),
+      customParts: ps.docs.map(plain),
+      settings: st.exists ? plain(st) : state.settings,
+    };
+    for (const c of state.customers) synced.customers[c.id] = JSON.stringify(c);
+    for (const b of state.builds) synced.builds[b.id] = JSON.stringify(b);
+    for (const p of state.customParts) synced.parts[p.id] = JSON.stringify(p);
+    synced.settings = JSON.stringify(state.settings);
+    try { localStorage.setItem(LS, JSON.stringify(state)); } catch {}
+    setSaveState('cloud');
+    const keep = state.builds.find((b) => b.id === ui.buildId) || state.builds[0];
+    if (keep) selectBuild(keep.id); else { ui.customerId = ui.buildId = null; renderAll(); render3D(); }
+  } catch { db = null; dbReady = false; setSaveState('local'); }
+}
+
+// Datei an den Nutzer geben (im Artifact über die Download-Freigabe, lokal als normaler Download)
+const downloadsCap = cap('downloads');
+async function saveFile(filename, data) {
+  const dl = await downloadsCap;
+  if (dl) {
+    try { await dl.save({ filename, data }); toast('Datei gespeichert'); return true; }
+    catch (e) { if (e?.code !== 'declined') toast('Speichern nicht möglich: ' + (e?.message || e?.code || '')); return false; }
+  }
+  const l = document.createElement('a');
+  l.href = URL.createObjectURL(data instanceof Blob ? data : new Blob([data]));
+  l.download = filename;
+  document.body.appendChild(l); l.click(); l.remove();
+  return true;
+}
+let toastT;
+function toast(msg) {
+  let t = $('#toast');
+  if (!t) { t = document.createElement('div'); t.id = 'toast'; t.setAttribute('role', 'status'); document.body.appendChild(t); }
+  t.textContent = msg; t.hidden = false;
+  clearTimeout(toastT); toastT = setTimeout(() => (t.hidden = true), 3200);
+}
 
 function fromTemplate(t, customerId, name) {
   const parts = {};
@@ -276,6 +352,7 @@ function update(fn, { panel = true, view = true, keepCam = true } = {}) {
   fn(b);
   if (b) touch(b); else save();
   if (panel) renderConfig();
+  renderTopbar();
   renderSidebar();
   renderStage();
   if (view) schedule3D(keepCam);
@@ -338,7 +415,6 @@ function renderSidebar() {
   const q = ui.search.toLowerCase();
   const custs = state.customers.filter((c) => !q || (c.name + c.company).toLowerCase().includes(q) || state.builds.some((b) => b.customerId === c.id && b.name.toLowerCase().includes(q)));
   $('#sidebar').innerHTML = `
-    <div class="brand"><b>NKZS</b><span>Build Studio</span></div>
     <div class="side-search"><input id="search" placeholder="Kunde oder Build suchen…" value="${esc(ui.search)}"></div>
     <div class="side-head"><span>Kunden</span><button class="icon-btn" data-act="new-customer" title="Neuer Kunde">+</button></div>
     <div class="cust-list">
@@ -359,12 +435,23 @@ function renderSidebar() {
         </div>`;
       }).join('')}
     </div>
-    <div class="side-foot">
-      <button data-act="settings">Einstellungen</button>
-      <button data-act="backup">Backup</button>
-    </div>`;
+`;
 }
-const typeDot = (type) => `<span class="type-dot t-${type}">${{ pc: 'PC', setup: 'ST', keyboard: 'KB', workstation: 'WS' }[type]}</span>`;
+const typeDot = (type) => `<span class="type-dot" title="${esc(TYPES[type].label)}">${{ pc: 'PC', setup: 'SETUP', keyboard: 'KB', workstation: 'WS' }[type]}</span>`;
+
+function renderTopbar() {
+  const b = curBuild(), c = b ? state.customers.find((x) => x.id === b.customerId) : curCustomer();
+  $('#topbar').innerHTML = `
+    <div class="tb-brand"><b>NKZS</b><span>Build Studio</span></div>
+    <div class="tb-crumbs">${c ? `<span>${esc(c.name)}</span>` : '<span>Kein Kunde gewählt</span>'}${b ? `<span class="sep">/</span><b>${esc(b.name)}</b>` : ''}</div>
+    <div class="tb-actions">
+      <span id="tb-save" class="tb-save"><i></i><span></span></span>
+      ${b ? '<button class="btn primary" data-act="quote">Angebot</button>' : ''}
+      <button class="btn ghost" data-act="settings">Einstellungen</button>
+      <button class="btn ghost" data-act="backup">Backup</button>
+    </div>`;
+  setSaveState(saveState);
+}
 
 // ---------- Render: Config ----------
 function renderConfig() {
@@ -615,11 +702,17 @@ function renderStage() {
   mountSwitchViz();
 }
 
-function renderAll() { renderSidebar(); renderConfig(); renderStage(); }
+function renderAll() { renderTopbar(); renderSidebar(); renderConfig(); renderStage(); }
 
 // ---------- Modals ----------
-function modal(title, body, { wide = false } = {}) {
-  $('#modal-root').innerHTML = `<div class="modal-bg" data-act="close-modal"><div class="modal ${wide ? 'wide' : ''}">
+let pendingConfirm = null;
+function confirmBox(title, text, yesLabel, onYes) {
+  pendingConfirm = onYes;
+  modal(title, `<p style="margin:0 0 4px;color:var(--muted)">${esc(text)}</p>
+    <div class="btns"><button class="btn danger grow" data-act="confirm-yes">${esc(yesLabel)}</button><button class="btn grow" data-act="close-modal">Abbrechen</button></div>`, { small: true });
+}
+function modal(title, body, { wide = false, small = false } = {}) {
+  $('#modal-root').innerHTML = `<div class="modal-bg" data-act="close-modal"><div class="modal ${wide ? 'wide' : small ? 'small' : ''}" role="dialog" aria-label="${esc(title)}">
     <div class="modal-h"><h2>${title}</h2><button class="icon-btn" data-act="close-modal">×</button></div>
     <div class="modal-b">${body}</div></div></div>`;
 }
@@ -666,7 +759,7 @@ function settingsModal() {
 }
 
 function backupModal() {
-  modal('Backup', `<p class="hint">Alle Kunden, Builds und eigenen Teile liegen lokal in diesem Browser. Sichere sie regelmäßig als Datei.</p>
+  modal('Backup', `<p class="hint">${saveState === 'cloud' ? 'Kunden, Builds und eigene Teile werden online gespeichert. Ein Backup als Datei ist trotzdem sinnvoll – z. B. vor großen Änderungen.' : 'Kunden, Builds und eigene Teile liegen nur in diesem Browser. Sichere sie regelmäßig als Datei.'}</p>
     <div class="btns"><button class="btn primary" data-act="export">Backup herunterladen</button>
     <label class="btn">Backup laden…<input type="file" accept=".json" id="import-file" hidden></label></div>`);
 }
@@ -748,7 +841,118 @@ function quoteModal() {
   const img = Viewer.snapshot();
   const html = quoteHtml(b, img);
   $('#print-root').innerHTML = html;
-  modal('Angebot', `${html}<div class="btns"><button class="btn primary grow" data-act="print">Drucken / als PDF sichern</button></div>`, { wide: true });
+  ui.quoteImg = img;
+  modal('Angebot', `<div class="quote-wrap">${html}</div><div class="btns"><button class="btn primary grow" data-act="pdf">PDF herunterladen</button><button class="btn" data-act="copy-quote">Als Text kopieren</button></div>`, { wide: true });
+}
+
+// ---------- Angebot als PDF (jsPDF) ----------
+const pdfTxt = (t) => String(t ?? '').replace(/[„“”]/g, '"').replace(/[‚‘’]/g, "'").replace(/[–—−]/g, '-').replace(/→/g, '->').replace(/≈/g, '~').replace(/ | /g, ' ').replace(/[^\x20-\x7e -ÿ€–]/g, '');
+const pdfEur = (n) => pdfTxt(eur(n));
+async function savePdf() {
+  const J = window.jspdf?.jsPDF;
+  if (!J) return toast('PDF-Modul nicht geladen – Internetverbindung prüfen.');
+  const b = curBuild(), st = state.settings, c = state.customers.find((x) => x.id === b.customerId) || {};
+  const tot = totals(b), f = 1 + (+st.markup || 0) / 100;
+  const no = `AN-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${String(st.quoteNo).padStart(3, '0')}`;
+  const doc = new J({ unit: 'mm', format: 'a4' });
+  const M = 18, W = 210 - 2 * M, ACC = [15, 122, 90], INK = [22, 25, 28], GREY = [120, 126, 132];
+  let y = 20;
+  const text = (t, x, yy, o = {}) => { doc.setFont('helvetica', o.bold ? 'bold' : 'normal'); doc.setFontSize(o.size || 9.5); doc.setTextColor(...(o.color || INK)); doc.text(pdfTxt(t), x, yy, { align: o.align || 'left' }); };
+  const ensure = (h) => { if (y + h > 272) { doc.addPage(); y = 20; } };
+  // Kopf
+  text('NKZS', M, y, { bold: true, size: 17 });
+  text('NICO KLEIN KAIZO STUDIOS', M, y + 5, { size: 7, color: GREY });
+  [st.owner, st.email, st.web].forEach((t, i) => text(t, 210 - M, y - 3 + i * 4.3, { size: 8.5, align: 'right', color: [80, 86, 92] }));
+  y += 11; doc.setDrawColor(...ACC); doc.setLineWidth(0.6); doc.line(M, y, 210 - M, y);
+  y += 9;
+  text('Angebot für', M, y, { size: 7.5, color: GREY });
+  text(c.name, M, y + 5, { bold: true, size: 11 });
+  [c.company, c.address].filter(Boolean).forEach((t, i) => text(t, M, y + 10 + i * 4.3, { size: 9 }));
+  [['Angebot', no], ['Datum', new Date().toLocaleDateString('de-DE')], ['Gültig bis', new Date(Date.now() + 14 * 864e5).toLocaleDateString('de-DE')]].forEach(([k, v], i) => {
+    text(k, 150, y + i * 4.6, { size: 8.5, color: GREY }); text(v, 210 - M, y + i * 4.6, { size: 8.5, align: 'right' });
+  });
+  y += 24;
+  text(b.name, M, y, { bold: true, size: 15 });
+  text(`${TYPES[b.type].label}${tot.units > 1 ? ` · ${tot.units} Systeme` : ''}`, M, y + 5.5, { size: 9, color: GREY });
+  y += 10;
+  // 3D-Ansicht
+  const img = ui.quoteImg;
+  if (img) {
+    const im = await new Promise((r) => { const i = new Image(); i.onload = () => r(i); i.onerror = () => r(null); i.src = img; });
+    if (im) {
+      let w = W, h = (W * im.height) / im.width;
+      if (h > 80) { h = 80; w = (h * im.width) / im.height; }
+      doc.addImage(img, 'JPEG', M + (W - w) / 2, y, w, h);
+      y += h + 7;
+    }
+  }
+  // Positionen
+  const cols = { pos: M, qty: 140, unit: 166, sum: 210 - M };
+  const head = () => {
+    ensure(10);
+    [['Position', cols.pos, 'left'], ['Menge', cols.qty, 'right'], ['Einzel', cols.unit, 'right'], ['Summe', cols.sum, 'right']].forEach(([t, x, al]) => text(t.toUpperCase(), x, y, { size: 7, color: GREY, bold: true, align: al }));
+    y += 2; doc.setDrawColor(...INK); doc.setLineWidth(0.4); doc.line(M, y, 210 - M, y); y += 5;
+  };
+  head();
+  const rows = lines(b).concat([{ label: 'Dienstleistung', name: 'Montage, Einrichtung & Test', qty: 1, price: tot.service / f, service: true }]);
+  for (const l of rows) {
+    if (l.group) { ensure(8); doc.setFillColor(243, 245, 246); doc.rect(M, y - 3.8, W, 6, 'F'); text(l.group, M + 1.5, y, { bold: true, size: 8.5 }); y += 6; continue; }
+    doc.setFontSize(9); const nameLines = doc.splitTextToSize(pdfTxt(l.name), 112);
+    const h = (l.label ? 3.6 : 0) + nameLines.length * 4 + 2.5;
+    if (y + h > 272) { doc.addPage(); y = 20; head(); }
+    let yy = y;
+    if (l.label) { text(l.label, cols.pos, yy, { size: 7, color: GREY }); yy += 3.6; }
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(...INK); doc.text(nameLines, cols.pos, yy);
+    const unit = l.service ? tot.service : l.price * f;
+    text(String(l.qty), cols.qty, y + (l.label ? 3.6 : 0), { align: 'right', size: 9 });
+    text(pdfEur(unit), cols.unit, y + (l.label ? 3.6 : 0), { align: 'right', size: 9 });
+    text(pdfEur(unit * l.qty), cols.sum, y + (l.label ? 3.6 : 0), { align: 'right', size: 9 });
+    y += h; doc.setDrawColor(226, 229, 232); doc.setLineWidth(0.2); doc.line(M, y - 1.5, 210 - M, y - 1.5); y += 1.5;
+  }
+  // Summe
+  ensure(22); y += 2;
+  if (tot.units > 1) { text('Pro System', 130, y, { size: 9, color: GREY }); text(pdfEur(tot.unit), 210 - M, y, { align: 'right', size: 9 }); y += 5; text('Anzahl', 130, y, { size: 9, color: GREY }); text('× ' + tot.units, 210 - M, y, { align: 'right', size: 9 }); y += 5; }
+  doc.setDrawColor(...INK); doc.setLineWidth(0.5); doc.line(130, y, 210 - M, y); y += 6;
+  text('Gesamtbetrag', 130, y, { bold: true, size: 11 }); text(pdfEur(tot.total), 210 - M, y, { bold: true, size: 11, align: 'right' });
+  y += 10;
+  // Benchmarks
+  const g = b.bench?.games || {};
+  const bench = GAMES.filter((x) => g[x.id]?.stock?.avg || g[x.id]?.tuned?.avg);
+  if (bench.length) {
+    ensure(14 + bench.length * 6);
+    text(`Gemessene Leistung (${b.bench.res || '1080p'})`, M, y, { bold: true, size: 10.5 }); y += 6;
+    [['Spiel', M, 'left'], ['Serie Ø / 1 % Low', 130, 'right'], ['Getweakt Ø / 1 % Low', 172, 'right'], ['Plus', 210 - M, 'right']].forEach(([t, x, al]) => text(t.toUpperCase(), x, y, { size: 7, color: GREY, bold: true, align: al }));
+    y += 5;
+    for (const x of bench) {
+      const s1 = g[x.id].stock || {}, t1 = g[x.id].tuned || {};
+      text(`${x.name} · ${x.preset}`, M, y, { size: 9 });
+      text(`${s1.avg ?? '-'} / ${s1.low ?? '-'} FPS`, 130, y, { size: 9, align: 'right' });
+      text(`${t1.avg ?? '-'} / ${t1.low ?? '-'} FPS`, 172, y, { size: 9, align: 'right' });
+      text(s1.avg && t1.avg ? `+${Math.round((t1.avg / s1.avg - 1) * 100)} %` : '', 210 - M, y, { size: 9, align: 'right', bold: true, color: ACC });
+      y += 5.5;
+    }
+    const tw = TWEAKS.filter((t) => b.bench?.tweaks?.[t.id]).map((t) => t.name + (t.input && b.bench.tweaks[t.id + '_v'] ? ` ${b.bench.tweaks[t.id + '_v']} ${t.input}` : ''));
+    doc.setFontSize(8); const note = doc.splitTextToSize(pdfTxt(`Selbst gemessen${b.bench.tool ? ` mit ${b.bench.tool}` : ''}${b.bench.date ? ` am ${new Date(b.bench.date).toLocaleDateString('de-DE')}` : ''}.${tw.length ? ` Tweaks: ${tw.join(', ')}.` : ''}`), W);
+    doc.setTextColor(...GREY); doc.text(note, M, y); y += note.length * 3.6 + 4;
+  }
+  const para = (label, body) => {
+    doc.setFontSize(9); const t = doc.splitTextToSize(pdfTxt(body), W - 2);
+    ensure(t.length * 4 + 8); text(label, M, y, { bold: true, size: 9 }); y += 4.5;
+    doc.setFont('helvetica', 'normal'); doc.setTextColor(...INK); doc.text(t, M, y); y += t.length * 4 + 4;
+  };
+  if (b.quoteUsed) { const cc = compare(b); if (cc.n) para('Spar-Option gebraucht', `Mit geprüften Gebrauchtteilen (${cc.n} Teile) läge der Teilepreis bei ca. ${eur(cc.bestUsed)} statt ${eur(cc.allNew)} – rund ${eur(cc.saving)} günstiger. Netzteil und SSD immer neu.`); }
+  if (b.notes) para('Hinweise', b.notes);
+  // Fuß auf jeder Seite
+  const pages = doc.getNumberOfPages();
+  for (let i = 1; i <= pages; i++) {
+    doc.setPage(i);
+    doc.setDrawColor(226, 229, 232); doc.setLineWidth(0.2); doc.line(M, 280, 210 - M, 280);
+    doc.setFontSize(7.5); doc.setTextColor(...GREY); doc.setFont('helvetica', 'normal');
+    doc.text(pdfTxt(`${st.kleinunternehmer ? 'Gemäß § 19 UStG wird keine Umsatzsteuer berechnet. ' : ''}Preise abhängig von der Tagesverfügbarkeit der Komponenten.`), M, 284.5);
+    doc.text(pdfTxt(`${st.company || 'NKZS'} · ${no} · Seite ${i}/${pages}`), 210 - M, 288.5, { align: 'right' });
+  }
+  const file = `Angebot ${no} ${pdfTxt(c.name || '')}.pdf`.replace(/[\\/:*?"<>|]/g, '');
+  if (await saveFile(file, doc.output('blob'))) { st.quoteNo++; save(); }
 }
 
 // ---------- Events ----------
@@ -781,18 +985,18 @@ document.addEventListener('click', (e) => {
     case 'delete-customer': {
       const c = curCustomer();
       const n = state.builds.filter((b) => b.customerId === c.id).length;
-      if (!confirm(`Kunde „${c.name}“${n ? ` mit ${n} Build(s)` : ''} löschen?`)) return;
-      state.customers = state.customers.filter((x) => x.id !== c.id);
-      state.builds = state.builds.filter((b) => b.customerId !== c.id);
-      ui.customerId = null; ui.buildId = null; save(); renderAll(); render3D();
-      return;
+      return confirmBox('Kunde löschen', `„${c.name}“${n ? ` und ${n} Build(s)` : ''} werden endgültig gelöscht.`, 'Endgültig löschen', () => {
+        state.customers = state.customers.filter((x) => x.id !== c.id);
+        state.builds = state.builds.filter((b) => b.customerId !== c.id);
+        ui.customerId = null; ui.buildId = null; save(); renderAll(); render3D(); toast('Kunde gelöscht');
+      });
     }
     case 'delete-build': {
       const b = curBuild();
-      if (!confirm(`Build „${b.name}“ löschen?`)) return;
-      state.builds = state.builds.filter((x) => x.id !== b.id);
-      ui.buildId = null; save(); renderAll(); render3D();
-      return;
+      return confirmBox('Build löschen', `„${b.name}“ wird endgültig gelöscht.`, 'Endgültig löschen', () => {
+        state.builds = state.builds.filter((x) => x.id !== b.id);
+        ui.buildId = null; save(); renderAll(); render3D(); toast('Build gelöscht');
+      });
     }
     case 'duplicate': {
       const b = clone(curBuild());
@@ -805,23 +1009,25 @@ document.addEventListener('click', (e) => {
     case 'quote': return quoteModal();
     case 'used-all': return update((b) => { for (const slot of TYPES[b.type].slots) { const p = sel(b, slot); if (p?.chk?.used && usedOk(slot) && slot !== 'keyboard') b.parts[slot].used = true; } });
     case 'used-none': return update((b) => { for (const s of Object.values(b.parts)) s.used = false; });
-    case 'print': state.settings.quoteNo++; save(); window.print(); return;
+    case 'confirm-yes': { const f = pendingConfirm; pendingConfirm = null; closeModal(); f?.(); return; }
+    case 'pdf': return savePdf();
+    case 'copy-quote': {
+      const b = curBuild(), tot = totals(b);
+      const txt = `Angebot: ${b.name}\n` + lines(b).filter((l) => !l.group).map((l) => `${l.qty}× ${l.name} – ${eur(l.price * l.qty)}`).join('\n') + `\nMontage & Einrichtung – ${eur(tot.service)}\nGesamt: ${eur(tot.total)}`;
+      navigator.clipboard?.writeText(txt).then(() => toast('Angebot als Text kopiert'), () => toast('Kopieren nicht erlaubt – Text bitte markieren'));
+      return;
+    }
     case 'shopping': return shoppingModal();
     case 'copy-list': {
       const b = curBuild(), tot = totals(b);
       const txt = lines(b).filter((l) => !l.group).map((l) => `${l.qty * tot.units}× ${l.name} – ${eur(l.qty * l.price * tot.units)}`).join('\n');
-      navigator.clipboard.writeText(`${b.name}\n${txt}\nTeile gesamt: ${eur(tot.parts * tot.units)}`);
-      a.textContent = 'Kopiert ✓';
+      navigator.clipboard?.writeText(`${b.name}\n${txt}\nTeile gesamt: ${eur(tot.parts * tot.units)}`).then(() => toast('Einkaufsliste kopiert'), () => toast('Kopieren nicht erlaubt'));
       return;
     }
     case 'settings': return settingsModal();
     case 'backup': return backupModal();
     case 'export': {
-      const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
-      const l = document.createElement('a');
-      l.href = URL.createObjectURL(blob);
-      l.download = `nkzs-build-studio-backup-${new Date().toISOString().slice(0, 10)}.json`;
-      l.click();
+      saveFile(`nkzs-build-studio-backup-${new Date().toISOString().slice(0, 10)}.json`, new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' }));
       return;
     }
     case 'save-custom': {
@@ -869,7 +1075,7 @@ document.addEventListener('change', (e) => {
   if (t.id === 'import-file' && t.files[0]) {
     t.files[0].text().then((txt) => {
       try { const s = JSON.parse(txt); if (!s.customers) throw 0; state = s; save(); ui.customerId = ui.buildId = null; closeModal(); renderAll(); render3D(); }
-      catch { alert('Die Datei ist kein gültiges Backup.'); }
+      catch { toast('Die Datei ist kein gültiges Backup (JSON aus „Backup herunterladen“).'); }
     });
   }
 });
@@ -901,3 +1107,4 @@ Viewer.init($('#viewer'));
 Viewer.setOpts({ rgb: ui.rgb, autoRotate: ui.autoRotate, sound: ui.sound });
 const first = state.builds[0];
 if (first) selectBuild(first.id); else renderAll();
+initDb();

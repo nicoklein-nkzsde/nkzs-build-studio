@@ -303,7 +303,7 @@ function buildKeyboard(k, interactive) {
       if (Math.abs(lum(lc) - lum(col)) < 0.3) lc = Math.abs(lum(k.colors.accent) - lum(col)) > 0.3 ? k.colors.accent : lum(col) > 0.5 ? '#222' : '#eee';
       x.fillStyle = lc;
       const big = legend.length === 1;
-      x.font = `600 ${big ? 34 : 20}px Inter, system-ui, sans-serif`;
+      x.font = `500 ${big ? 34 : 20}px 'IBM Plex Sans', system-ui, sans-serif`;
       x.textAlign = big ? 'center' : 'left';
       x.textBaseline = big ? 'middle' : 'top';
       if (big) x.fillText(legend, w / 2, h / 2); else x.fillText(legend, 20, 20);
@@ -354,7 +354,7 @@ function makeWallpaper() {
     gr.addColorStop(0, '#1a1340'); gr.addColorStop(0.55, '#5b2a86'); gr.addColorStop(1, '#ff7a59');
     x.fillStyle = gr; x.fillRect(0, 0, w, h);
     for (let i = 0; i < 5; i++) { x.fillStyle = `rgba(255,255,255,${0.03 + i * 0.01})`; x.beginPath(); x.arc(w * 0.7, h * 1.1, 200 + i * 90, 0, 7); x.fill(); }
-    x.fillStyle = 'rgba(255,255,255,.85)'; x.font = '700 64px Inter, system-ui'; x.fillText('NKZS', 64, h - 80);
+    x.fillStyle = 'rgba(255,255,255,.85)'; x.font = "700 64px 'IBM Plex Sans', system-ui"; x.fillText('NKZS', 64, h - 80);
   });
 }
 
@@ -447,7 +447,8 @@ function buildSetup(s) {
     g.add(pc.group);
   }
   // Wand + Boden
-  g.add(box(40, 20, 0.2, M('#23252b', { r: 0.9 }), 0, 10, dz - dd / 2 - 0.2));
+  const wallCol = new THREE.Color(getComputedStyle(document.documentElement).getPropertyValue('--viewport-floor').trim() || '#d3d8dc').offsetHSL(0, 0, -0.04);
+  g.add(box(40, 20, 0.2, M(wallCol, { r: 0.9 }), 0, 10, dz - dd / 2 - 0.2));
   const strip = box(dw - 1, 0.06, 0.06, rgbMat(0), 0, deskY - 0.4, dz - dd / 2 + 0.2);
   g.add(strip);
   return g;
@@ -468,8 +469,8 @@ export function init(container) {
   const pmrem = new THREE.PMREMGenerator(renderer);
   scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
   scene.environmentIntensity = 0.35;
-  scene.background = new THREE.Color('#0d0e12');
-  scene.fog = new THREE.Fog('#0d0e12', 60, 140);
+  scene.background = new THREE.Color('#e3e6e9');
+  scene.fog = new THREE.Fog('#e3e6e9', 60, 140);
 
   camera = new THREE.PerspectiveCamera(35, 1, 0.1, 400);
   controls = new OrbitControls(camera, renderer.domElement);
@@ -487,7 +488,7 @@ export function init(container) {
   rim.position.set(-10, 8, -10);
   scene.add(rim);
 
-  floor = mesh(new THREE.CircleGeometry(80, 64), M('#16171c', { r: 0.95 }));
+  floor = mesh(new THREE.CircleGeometry(80, 64), M('#d3d8dc', { r: 0.95 }));
   floor.rotation.x = -Math.PI / 2;
   floor.castShadow = false;
   scene.add(floor);
@@ -496,6 +497,9 @@ export function init(container) {
   scene.add(root);
   wallpaper = makeWallpaper();
 
+  applyTheme();
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
+  new MutationObserver(applyTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
   new ResizeObserver(resize).observe(el);
   resize();
   renderer.domElement.addEventListener('pointerdown', onPointer);
@@ -503,6 +507,16 @@ export function init(container) {
   window.addEventListener('keydown', onKey);
   window.addEventListener('keyup', onKey);
   renderer.setAnimationLoop(tick);
+}
+
+// Hintergrund & Boden folgen dem hellen/dunklen Design (CSS-Variablen)
+function applyTheme() {
+  const css = getComputedStyle(document.documentElement);
+  const bg = css.getPropertyValue('--viewport').trim() || '#e3e6e9';
+  const fl = css.getPropertyValue('--viewport-floor').trim() || '#d3d8dc';
+  scene.background.set(bg);
+  scene.fog.color.set(bg);
+  floor.material.color.set(fl);
 }
 
 function resize() {
