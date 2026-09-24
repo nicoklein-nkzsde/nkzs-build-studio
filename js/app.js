@@ -14,6 +14,7 @@ const clone = (o) => JSON.parse(JSON.stringify(o));
 const $ = (s) => document.querySelector(s);
 
 let state = load();
+state.settings = { webFee: 50, requestEmail: 'nicoklein@nkzs.de', ...state.settings };
 const ui = { customerId: null, buildId: null, view: null, rgb: false, autoRotate: false, sound: true, search: '', typed: '' };
 
 function seed() {
@@ -497,7 +498,8 @@ function renderConfig() {
     </div>
 
     <div class="btns">
-      <button class="btn primary grow" data-act="quote">Angebot erstellen</button>
+      ${IN_ARTIFACT ? '' : '<button class="btn primary grow" data-act="request">Build anfragen</button>'}
+      <button class="btn ${IN_ARTIFACT ? 'primary grow' : ''}" data-act="quote">Angebot erstellen</button>
       <button class="btn" data-act="shopping">Einkaufsliste</button>
       <button class="btn" data-act="duplicate">Duplizieren</button>
       <button class="btn danger" data-act="delete-build">Löschen</button>
@@ -753,6 +755,7 @@ function settingsModal() {
     <div class="row2">${f('owner', 'Dein Name')}${f('company', 'Firma')}</div>
     <div class="row2">${f('email', 'E-Mail')}${f('web', 'Website')}</div>
     <div class="row2">${f('markup', 'Aufschlag auf Teile (%)', 'number')}${f('amazonTag', 'Amazon-Partner-Tag (optional)')}</div>
+    <div class="row2">${f('webFee', 'Pauschale pro Website-Anfrage (€, Montage extra)', 'number')}${f('requestEmail', 'Anfragen gehen an (E-Mail)')}</div>
     <label class="chk"><input type="checkbox" data-set="kleinunternehmer" ${s.kleinunternehmer ? 'checked' : ''}> Kleinunternehmer nach § 19 UStG (keine USt. ausweisen)</label>
     <p class="hint">Der Aufschlag wird im Angebot direkt in die Teilepreise eingerechnet. Mit Amazon-Tag bekommen die Links in der Einkaufsliste deine Partner-ID.</p>
     <div class="btns"><button class="btn primary grow" data-act="close-modal">Fertig</button></div>
@@ -762,7 +765,8 @@ function settingsModal() {
 function backupModal() {
   modal('Backup', `<p class="hint">${saveState === 'cloud' ? 'Kunden, Builds und eigene Teile werden online gespeichert. Ein Backup als Datei ist trotzdem sinnvoll – z. B. vor großen Änderungen.' : 'Kunden, Builds und eigene Teile liegen nur in diesem Browser. Sichere sie regelmäßig als Datei.'}</p>
     <div class="btns"><button class="btn primary" data-act="export">Backup herunterladen</button>
-    <label class="btn">Backup laden…<input type="file" accept=".json" id="import-file" hidden></label></div>`);
+    <label class="btn">Backup oder Anfrage laden…<input type="file" accept=".json" id="import-file" hidden></label></div>
+    <p class="hint" style="margin-top:12px">Build-Anfragen von Kunden kommen per E-Mail mit Anhang <b>build-….json</b> – hier laden, dann ist der Build samt Kunde sofort da. Oder einfach den Link in der E-Mail öffnen.</p>`);
 }
 
 function shopUrl(name) {
@@ -850,11 +854,18 @@ function quoteModal() {
 const pdfTxt = (t) => String(t ?? '').replace(/[„“”]/g, '"').replace(/[‚‘’]/g, "'").replace(/[–—−]/g, '-').replace(/→/g, '->').replace(/≈/g, '~').replace(/ | /g, ' ').replace(/[^\x20-\x7e -ÿ€–]/g, '');
 const pdfEur = (n) => pdfTxt(eur(n));
 async function savePdf() {
-  const J = window.jspdf?.jsPDF;
-  if (!J) return toast('PDF-Modul nicht geladen – Internetverbindung prüfen.');
+  if (!window.jspdf?.jsPDF) return toast('PDF-Modul nicht geladen – Internetverbindung prüfen.');
   const b = curBuild(), st = state.settings, c = state.customers.find((x) => x.id === b.customerId) || {};
-  const tot = totals(b), f = 1 + (+st.markup || 0) / 100;
-  const no = `AN-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${String(st.quoteNo).padStart(3, '0')}`;
+  const { doc, no } = await makePdf(b, { customer: c });
+  const file = `Angebot ${no} ${pdfTxt(c.name || '')}.pdf`.replace(/[\\/:*?"<>|]/g, '');
+  if (await saveFile(file, doc.output('blob'))) { st.quoteNo++; save(); }
+}
+// kind: 'quote' (Angebot) | 'request' (Build-Anfrage eines Kunden)
+async function makePdf(b, { customer = {}, kind = 'quote', no: forcedNo, fee = 0 } = {}) {
+  const J = window.jspdf.jsPDF;
+  const st = state.settings, c = customer;
+  const tot = totals(b), f = kind === 'request' ? 1 : 1 + (+st.markup || 0) / 100;
+  const no = forcedNo || `AN-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${String(st.quoteNo).padStart(3, '0')}`;
   const doc = new J({ unit: 'mm', format: 'a4' });
   const M = 18, W = 210 - 2 * M, ACC = [15, 122, 90], INK = [22, 25, 28], GREY = [120, 126, 132];
   let y = 20;
@@ -866,10 +877,10 @@ async function savePdf() {
   [st.owner, st.email, st.web].forEach((t, i) => text(t, 210 - M, y - 3 + i * 4.3, { size: 8.5, align: 'right', color: [80, 86, 92] }));
   y += 11; doc.setDrawColor(...ACC); doc.setLineWidth(0.6); doc.line(M, y, 210 - M, y);
   y += 9;
-  text('Angebot für', M, y, { size: 7.5, color: GREY });
+  text(kind === 'request' ? 'Anfrage von' : 'Angebot für', M, y, { size: 7.5, color: GREY });
   text(c.name, M, y + 5, { bold: true, size: 11 });
-  [c.company, c.address].filter(Boolean).forEach((t, i) => text(t, M, y + 10 + i * 4.3, { size: 9 }));
-  [['Angebot', no], ['Datum', new Date().toLocaleDateString('de-DE')], ['Gültig bis', new Date(Date.now() + 14 * 864e5).toLocaleDateString('de-DE')]].forEach(([k, v], i) => {
+  [c.company, c.address, c.email, c.phone].filter(Boolean).slice(0, 3).forEach((t, i) => text(t, M, y + 10 + i * 4.3, { size: 9 }));
+  [[kind === 'request' ? 'Anfrage' : 'Angebot', no], ['Datum', new Date().toLocaleDateString('de-DE')], ['Gültig bis', new Date(Date.now() + 14 * 864e5).toLocaleDateString('de-DE')]].forEach(([k, v], i) => {
     text(k, 150, y + i * 4.6, { size: 8.5, color: GREY }); text(v, 210 - M, y + i * 4.6, { size: 8.5, align: 'right' });
   });
   y += 24;
@@ -895,7 +906,7 @@ async function savePdf() {
     y += 2; doc.setDrawColor(...INK); doc.setLineWidth(0.4); doc.line(M, y, 210 - M, y); y += 5;
   };
   head();
-  const rows = lines(b).concat([{ label: 'Dienstleistung', name: 'Montage, Einrichtung & Test', qty: 1, price: tot.service / f, service: true }]);
+  const rows = lines(b).concat([{ label: 'Dienstleistung', name: 'Montage, Einrichtung & Test', qty: 1, price: tot.service / f, service: true }], fee ? [{ label: 'Dienstleistung', name: 'Pauschale Website-Anfrage', qty: 1, price: fee, fixed: true }] : []);
   for (const l of rows) {
     if (l.group) { ensure(8); doc.setFillColor(243, 245, 246); doc.rect(M, y - 3.8, W, 6, 'F'); text(l.group, M + 1.5, y, { bold: true, size: 8.5 }); y += 6; continue; }
     doc.setFontSize(9); const nameLines = doc.splitTextToSize(pdfTxt(l.name), 112);
@@ -904,7 +915,7 @@ async function savePdf() {
     let yy = y;
     if (l.label) { text(l.label, cols.pos, yy, { size: 7, color: GREY }); yy += 3.6; }
     doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(...INK); doc.text(nameLines, cols.pos, yy);
-    const unit = l.service ? tot.service : l.price * f;
+    const unit = l.service ? tot.service : l.fixed ? l.price : l.price * f;
     text(String(l.qty), cols.qty, y + (l.label ? 3.6 : 0), { align: 'right', size: 9 });
     text(pdfEur(unit), cols.unit, y + (l.label ? 3.6 : 0), { align: 'right', size: 9 });
     text(pdfEur(unit * l.qty), cols.sum, y + (l.label ? 3.6 : 0), { align: 'right', size: 9 });
@@ -914,7 +925,7 @@ async function savePdf() {
   ensure(22); y += 2;
   if (tot.units > 1) { text('Pro System', 130, y, { size: 9, color: GREY }); text(pdfEur(tot.unit), 210 - M, y, { align: 'right', size: 9 }); y += 5; text('Anzahl', 130, y, { size: 9, color: GREY }); text('× ' + tot.units, 210 - M, y, { align: 'right', size: 9 }); y += 5; }
   doc.setDrawColor(...INK); doc.setLineWidth(0.5); doc.line(130, y, 210 - M, y); y += 6;
-  text('Gesamtbetrag', 130, y, { bold: true, size: 11 }); text(pdfEur(tot.total), 210 - M, y, { bold: true, size: 11, align: 'right' });
+  text(kind === 'request' ? 'Gesamt ca.' : 'Gesamtbetrag', 130, y, { bold: true, size: 11 }); text(pdfEur(tot.total + fee), 210 - M, y, { bold: true, size: 11, align: 'right' });
   y += 10;
   // Benchmarks
   const g = b.bench?.games || {};
@@ -952,8 +963,129 @@ async function savePdf() {
     doc.text(pdfTxt(`${st.kleinunternehmer ? 'Gemäß § 19 UStG wird keine Umsatzsteuer berechnet. ' : ''}Preise abhängig von der Tagesverfügbarkeit der Komponenten.`), M, 284.5);
     doc.text(pdfTxt(`${st.company || 'NKZS'} · ${no} · Seite ${i}/${pages}`), 210 - M, 288.5, { align: 'right' });
   }
-  const file = `Angebot ${no} ${pdfTxt(c.name || '')}.pdf`.replace(/[\\/:*?"<>|]/g, '');
-  if (await saveFile(file, doc.output('blob'))) { st.quoteNo++; save(); }
+  return { doc, no };
+}
+
+// ---------- Build-Anfrage (Kunde -> Nico) ----------
+// Versand über FormSubmit (E-Mail an Nico mit PDF + Build-Datei + Import-Link). Im claude.ai-Artifact gesperrt.
+const IN_ARTIFACT = !!window.claude?.use;
+const b64u = (str) => btoa(String.fromCharCode(...new TextEncoder().encode(str))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+const unb64u = (s) => new TextDecoder().decode(Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), (ch) => ch.charCodeAt(0)));
+function requestPayload(b, cust) {
+  const slim = { name: b.name, type: b.type, parts: b.parts, units: b.units, kb: TYPES[b.type].kb || sel(b, 'keyboard')?.custom ? b.kb : undefined, notes: b.notes, bench: b.bench };
+  return { v: 1, sent: new Date().toISOString(), customer: cust, build: slim };
+}
+function requestText(b) {
+  const L = lines(b).filter((l) => !l.group);
+  return L.map((l) => {
+    const p = l.slot ? sel(b, l.slot) : null;
+    const q = encodeURIComponent(l.name.replace(/\(.*?\)/g, '').trim());
+    const link = l.isUsed ? `https://www.kleinanzeigen.de/s-${q.replace(/%20/g, '-')}/k0` : p?.chk?.url || p?.buy || (l.slot ? `https://www.idealo.de/preisvergleich/MainSearchProductCategory.html?q=${q}` : '');
+    return `${l.qty}× ${l.label ? l.label + ': ' : ''}${l.name} – ${eur(l.price * l.qty)}${link ? `\n   ${link}` : ''}`;
+  }).join('\n');
+}
+function requestModal() {
+  const b = curBuild(), st = state.settings, tot = totals(b), fee = +st.webFee || 0;
+  const errs = checks(b).filter((c) => c.level === 'error').length;
+  modal('Build anfragen', `
+    <div class="card sum" style="margin-bottom:14px">
+      <div class="sum-row"><span>${esc(b.name)} · Teile${compare(b).n && Object.values(b.parts).some((x) => x.used) ? ' (teils gebraucht)' : ''}</span><span>${eur(tot.parts * tot.units)}</span></div>
+      <div class="sum-row"><span>Montage & Einrichtung (extra)</span><span>${eur(tot.service * tot.units)}</span></div>
+      ${fee ? `<div class="sum-row"><span>Pauschale Website-Anfrage</span><span>${eur(fee)}</span></div>` : ''}
+      <div class="sum-total" style="font-size:15px"><span>Gesamt ca.</span><span>${eur(tot.total + fee)}</span></div>
+      <div class="hint" style="margin-top:6px">Unverbindlich. Preise sind Tagespreise – ${esc(st.owner)} prüft alles und meldet sich innerhalb von 24 Stunden.</div>
+    </div>
+    ${errs ? `<div class="check error" style="margin-bottom:12px"><i>✕</i><span>Der Build hat noch ${errs} Kompatibilitäts-Problem${errs > 1 ? 'e' : ''}. Du kannst trotzdem anfragen – wir klären das zusammen.</span></div>` : ''}
+    <form id="rq-form" class="cust-form" style="padding:0" novalidate>
+      <div class="row2"><div class="field"><label for="rq-name">Name *</label><input id="rq-name" autocomplete="name" required></div>
+      <div class="field"><label for="rq-email">E-Mail *</label><input id="rq-email" type="email" autocomplete="email" required></div></div>
+      <div class="row2"><div class="field"><label for="rq-phone">Telefon / WhatsApp</label><input id="rq-phone" type="tel" autocomplete="tel"></div>
+      <div class="field"><label for="rq-contact">Wie sollen wir sprechen?</label><select id="rq-contact"><option>E-Mail</option><option>WhatsApp / Telefon</option><option>Live-Gespräch (Video/Discord)</option></select></div></div>
+      <div class="field"><label for="rq-msg">Wofür ist der PC? Wünsche, Budget, Spiele, Programme …</label><textarea id="rq-msg" rows="4" placeholder="z. B. Fortnite & CS2 auf 240 Hz, Budget 1.200 €, gern gebrauchte Teile, weißes Design"></textarea></div>
+      <label class="chk" style="align-items:flex-start"><input type="checkbox" id="rq-consent" required style="margin-top:3px"><span>Ich bin einverstanden, dass meine Angaben und die Konfiguration zur Bearbeitung der Anfrage per E-Mail an ${esc(st.company || 'NKZS')} übermittelt werden (Versand über FormSubmit). Details: <a href="https://nkzs.de/datenschutz.html" target="_blank" rel="noopener">Datenschutz</a>.</span></label>
+      <div id="rq-error" class="check error" hidden><i>!</i><span></span></div>
+      <div class="btns"><button type="submit" class="btn primary grow" id="rq-send">Anfrage senden</button><button type="button" class="btn" data-act="close-modal">Abbrechen</button></div>
+    </form>`, { wide: false });
+  $('#rq-form').addEventListener('submit', (e) => { e.preventDefault(); sendRequest(); });
+  setTimeout(() => $('#rq-name')?.focus(), 30);
+}
+async function sendRequest() {
+  const b = curBuild(), st = state.settings;
+  const v = (id) => $('#' + id)?.value.trim();
+  const err = (m) => { const el = $('#rq-error'); el.hidden = false; el.querySelector('span').textContent = m; };
+  const cust = { name: v('rq-name'), email: v('rq-email'), phone: v('rq-phone'), contact: v('rq-contact'), message: v('rq-msg') };
+  if (!cust.name) return err('Bitte deinen Namen eintragen.');
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(cust.email || '')) return err('Bitte eine gültige E-Mail-Adresse eintragen – dorthin kommt die Antwort.');
+  if (!$('#rq-consent').checked) return err('Bitte der Übermittlung zustimmen, sonst können wir die Anfrage nicht bearbeiten.');
+  const to = (st.requestEmail || st.email || '').trim();
+  if (!to) return err('Es ist keine Empfänger-Adresse eingestellt.');
+  const btn = $('#rq-send'); btn.disabled = true; btn.textContent = 'Wird gesendet …';
+  try {
+    const fee = +st.webFee || 0;
+    const rb = clone(b);
+    const no = `ANF-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+    ui.quoteImg = Viewer.snapshot();
+    const payload = requestPayload(rb, cust);
+    const link = `${location.origin}${location.pathname}#import=${b64u(JSON.stringify(payload))}`;
+    const tot = totals(rb);
+    const files = [];
+    if (window.jspdf?.jsPDF) { const { doc } = await makePdf(rb, { customer: cust, kind: 'request', no, fee }); files.push(['attachment', new File([doc.output('blob')], `Build-Anfrage ${no}.pdf`, { type: 'application/pdf' })]); }
+    files.push(['build_datei', new File([JSON.stringify(payload, null, 2)], `build-${no}.json`, { type: 'application/json' })]);
+    const fields = {
+      _subject: `Build-Anfrage: ${b.name} – ${cust.name}`, _template: 'table', _captcha: 'false', _replyto: cust.email,
+      Name: cust.name, 'E-Mail': cust.email, Telefon: cust.phone || '–', Kontaktwunsch: cust.contact, Nachricht: cust.message || '–',
+      Anfrage: no, Build: `${b.name} (${TYPES[b.type].label}${tot.units > 1 ? `, ${tot.units}×` : ''})`,
+      Teile: eur(tot.parts * tot.units), 'Montage & Einrichtung': eur(tot.service * tot.units), 'Pauschale Website-Anfrage': eur(fee), 'Gesamt ca.': eur(tot.total + fee),
+      Teileliste: requestText(rb), 'In NKZS Build Studio öffnen': link,
+    };
+    await postForm(`https://formsubmit.co/${encodeURIComponent(to)}`, fields, files);
+    $('#modal-root .modal-b').innerHTML = `<div class="check ok"><i>✓</i><span><b>Anfrage gesendet.</b> Danke, ${esc(cust.name.split(' ')[0])}! ${esc(st.owner)} meldet sich innerhalb von 24 Stunden bei dir – per ${esc(cust.contact)}.</span></div>
+      <div class="btns"><button class="btn primary grow" data-act="close-modal">Schließen</button></div>`;
+  } catch (e) {
+    btn.disabled = false; btn.textContent = 'Anfrage senden';
+    err('Senden hat nicht geklappt – bitte Internetverbindung prüfen und nochmal versuchen, oder direkt an ' + to + ' schreiben.');
+  }
+}
+// Echtes Formular in einen unsichtbaren Rahmen senden (damit Dateianhänge mitgehen)
+function postForm(action, fields, files) {
+  return new Promise((resolve, reject) => {
+    const name = 'rq-' + uid();
+    const frame = Object.assign(document.createElement('iframe'), { name, hidden: true });
+    const form = Object.assign(document.createElement('form'), { action, method: 'POST', target: name, enctype: 'multipart/form-data', hidden: true });
+    for (const [k, v] of Object.entries(fields)) { const i = document.createElement(k === 'Teileliste' ? 'textarea' : 'input'); i.name = k; i.value = v; form.appendChild(i); }
+    for (const [k, file] of files) {
+      const i = Object.assign(document.createElement('input'), { type: 'file', name: k });
+      try { const dt = new DataTransfer(); dt.items.add(file); i.files = dt.files; form.appendChild(i); } catch {}
+    }
+    let done = false;
+    const t = setTimeout(() => { if (!done) { done = true; reject(new Error('timeout')); } }, 30000);
+    frame.addEventListener('load', () => { if (done) return; done = true; clearTimeout(t); setTimeout(() => { form.remove(); frame.remove(); }, 1000); resolve(); });
+    document.body.append(frame, form);
+    form.submit();
+  });
+}
+// Anfrage übernehmen: per Link (#import=…) oder per Build-Datei
+function importRequest(payload) {
+  if (!payload?.build?.type || !TYPES[payload.build.type]) throw new Error('bad');
+  const cu = payload.customer || {};
+  let c = cu.email && state.customers.find((x) => x.email && x.email.toLowerCase() === cu.email.toLowerCase());
+  if (!c) {
+    c = { id: uid(), name: cu.name || 'Anfrage', company: '', email: cu.email || '', phone: cu.phone || '', address: '', notes: [cu.contact && `Kontaktwunsch: ${cu.contact}`, cu.message].filter(Boolean).join('\n'), created: Date.now() };
+    state.customers.unshift(c);
+  }
+  const src = payload.build;
+  const b = { ...fromTemplate({ type: src.type, name: src.name, parts: {} }, c.id), parts: src.parts || {}, units: src.units || 1, notes: [src.notes, cu.message && `Kunde: ${cu.message}`].filter(Boolean).join('\n'), status: 'Anfrage', bench: src.bench };
+  if (src.kb) b.kb = { ...b.kb, ...src.kb };
+  state.builds.push(b);
+  save();
+  selectBuild(b.id);
+  toast(`Anfrage von ${c.name} übernommen`);
+}
+function importFromHash() {
+  const m = location.hash.match(/^#import=([A-Za-z0-9_-]+)/);
+  if (!m) return;
+  try { importRequest(JSON.parse(unb64u(m[1]))); } catch { toast('Der Anfrage-Link ist beschädigt.'); }
+  history.replaceState(null, '', location.pathname);
 }
 
 // ---------- Events ----------
@@ -1008,6 +1140,7 @@ document.addEventListener('click', (e) => {
     case 'kbdemo': return playDemo();
     case 'autofill': return update((b) => autoFill(b));
     case 'quote': return quoteModal();
+    case 'request': return requestModal();
     case 'used-all': return update((b) => { for (const slot of TYPES[b.type].slots) { const p = sel(b, slot); if (p?.chk?.used && usedOk(slot) && slot !== 'keyboard') b.parts[slot].used = true; } });
     case 'used-none': return update((b) => { for (const s of Object.values(b.parts)) s.used = false; });
     case 'confirm-yes': { const f = pendingConfirm; pendingConfirm = null; closeModal(); f?.(); return; }
@@ -1075,8 +1208,12 @@ document.addEventListener('change', (e) => {
   if (d.set) { state.settings[d.set] = t.type === 'checkbox' ? t.checked : t.type === 'number' ? +t.value : t.value; save(); renderConfig(); renderSidebar(); renderStage(); return; }
   if (t.id === 'import-file' && t.files[0]) {
     t.files[0].text().then((txt) => {
-      try { const s = JSON.parse(txt); if (!s.customers) throw 0; state = s; save(); ui.customerId = ui.buildId = null; closeModal(); renderAll(); render3D(); }
-      catch { toast('Die Datei ist kein gültiges Backup (JSON aus „Backup herunterladen“).'); }
+      try {
+        const s = JSON.parse(txt);
+        if (s.v && s.build) { closeModal(); importRequest(s); return; }
+        if (!s.customers) throw 0;
+        state = s; save(); ui.customerId = ui.buildId = null; closeModal(); renderAll(); render3D();
+      } catch { toast('Die Datei ist weder ein Backup noch eine Build-Anfrage.'); }
     });
   }
 });
@@ -1108,4 +1245,5 @@ Viewer.init($('#viewer'));
 Viewer.setOpts({ rgb: ui.rgb, autoRotate: ui.autoRotate, sound: ui.sound });
 const first = state.builds[0];
 if (first) selectBuild(first.id); else renderAll();
+importFromHash();
 initDb();

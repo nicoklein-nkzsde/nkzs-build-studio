@@ -47,7 +47,7 @@ export const TWEAKS = [
   { id: 'nv', name: 'Treiber-Tweaks (Reflex, Shader-Cache)' },
 ];
 
-export const STATUS = ['Idee', 'Entwurf', 'Angebot gesendet', 'Bestellt', 'Gebaut', 'Übergeben', 'Sammlung'];
+export const STATUS = ['Anfrage', 'Idee', 'Entwurf', 'Angebot gesendet', 'Bestellt', 'Gebaut', 'Übergeben', 'Sammlung'];
 
 const c = (id, name, price, spec = {}) => ({ id, name, price, ...spec });
 
