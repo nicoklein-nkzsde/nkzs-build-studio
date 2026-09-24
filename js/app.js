@@ -2,6 +2,8 @@ import { CATALOG, SLOT_LABELS, TYPES, STATUS, KB, DEFAULT_KB, TEMPLATES, USED_AD
 import { PRICES, CHECKED } from './prices.js';
 import { layoutKeys } from './layouts.js';
 import * as Viewer from './viewer.js';
+import { demo } from './sound.js';
+import { mountViz, stopViz, SWITCH_INFO } from './switchviz.js';
 
 // ---------- State ----------
 const LS = 'nkzs-build-studio-v1';
@@ -76,16 +78,47 @@ function kbLines(kb) {
   return L;
 }
 const kbPrice = (kb) => kbLines(kb).reduce((s, l) => s + l.qty * l.price, 0);
+// Sound-Profil aus allen Bauteilen (siehe sound.js)
+const clamp01 = (v) => Math.max(0, Math.min(1, v));
+function soundProfile(kb) {
+  const cs = kbItem('cases', kb.caseId), pl = kbItem('plates', kb.plateId), pcb = kbItem('pcbs', kb.pcbId);
+  const sw = kbItem('switches', kb.switchId), cap = kbItem('caps', kb.capsId), st = kbItem('stabs', kb.stabId);
+  const ex = (kb.extras || []).map((x) => KB.extras.find((y) => y.id === x)).filter(Boolean);
+  const sum = (k) => ex.reduce((a, e) => a + (e[k] || 0), 0);
+  const abs = cap.mat === 'ABS';
+  const capFactor = (abs ? 1.07 : 0.97) * (1.12 - cap.h * 0.35);
+  const damp = clamp01((sw.damp || 0) + sum('damp') + (pl.flex || 0) * 0.25 + (cs.material === 'pc' ? 0.1 : 0));
+  const pitch = sw.pitch * pl.pitch * cs.pitch * (pcb.pitch || 1) * capFactor * ex.reduce((a, e) => a * (e.pitch || 1), 1);
+  const lubed = ex.some((e) => e.id === 'kx-lube');
+  return {
+    pitch, damp,
+    type: sw.type,
+    bright: clamp01((pl.bright ?? 0.5) * 0.6 + (abs ? 0.35 : 0.15) + (cap.h < 0.3 ? 0.2 : 0) + (sw.type === 'clicky' ? 0.1 : 0) - damp * 0.2),
+    caseRes: (cs.res || 900) * pl.pitch,
+    ring: clamp01((cs.ring || 0) + (pl.ring || 0) + sum('ring')),
+    hollow: clamp01((cs.hollow || 0) + sum('hollow')),
+    scratch: clamp01((sw.scratch ?? 0.3) + sum('scratch')),
+    rattle: clamp01((st.rattle ?? 0.3) * (lubed ? 0.7 : 1)),
+    ping: clamp01((pcb.ping ?? 0.3) + sum('ping')),
+  };
+}
+function soundTraits(p) {
+  const depth = clamp01((1.12 - p.pitch) / 0.45);
+  const word = p.type === 'clicky' ? 'Clicky – laut & knackig'
+    : depth > 0.6 && p.damp > 0.35 ? 'Thocky & gedämpft'
+    : depth > 0.6 ? 'Thocky'
+    : p.hollow > 0.5 ? 'Hohl / klapprig'
+    : p.bright > 0.6 ? 'Clacky & hell'
+    : p.damp > 0.5 ? 'Leise & weich' : 'Ausgewogen';
+  return { word, bars: [['Tiefe (Thock)', depth], ['Helligkeit (Clack)', p.bright], ['Nachklang', p.ring], ['Hohlheit', p.hollow], ['Dämpfung', p.damp], ['Kratzen', p.scratch], ['Stabi-Klappern', p.rattle]] };
+}
 function resolveKb(kb) {
   const cs = kbItem('cases', kb.caseId), pl = kbItem('plates', kb.plateId), pcb = kbItem('pcbs', kb.pcbId);
   const sw = kbItem('switches', kb.switchId), cap = kbItem('caps', kb.capsId);
-  const ex = (kb.extras || []).map((x) => KB.extras.find((y) => y.id === x)).filter(Boolean);
-  const damp = (sw.damp || 0) + ex.reduce((s, e) => s + (e.damp || 0), 0) + (cs.material === 'pc' ? 0.1 : 0);
-  const pitch = sw.pitch * pl.pitch * cs.pitch * ex.reduce((s, e) => s * (e.pitch || 1), 1) * (cap.h > 0.55 ? 0.93 : 1);
   return {
     layout: layoutKeys(kb.layout), caseColor: kb.caseColor, caseMat: cs.material, weight: cs.weight,
     plate: pl, switchColor: sw.color, capH: cap.h, sculpt: cap.sculpt, gloss: cap.gloss, rgb: !!pcb.rgb,
-    colors: kb.colors, sound: { pitch, type: sw.type, damp },
+    colors: kb.colors, sound: soundProfile(kb),
   };
 }
 function stockKb(item) {
@@ -255,6 +288,7 @@ function selectBuild(id) {
   ui.customerId = b.customerId;
   ui.view = availableViews(b)[0];
   ui.typed = '';
+  ui.svType = null;
   renderAll();
   schedule3D(false);
 }
@@ -492,9 +526,43 @@ function kbSection(b) {
       </div>
       <div class="presets">${KB.presets.map((p, i) => `<button class="preset" data-preset="${i}"><span class="sw">${['alpha', 'mod', 'accent'].map((k) => `<span style="background:${p.colors[k]}"></span>`).join('')}</span>${p.name}</button>`).join('')}</div>
       <div>${KB.extras.map((x) => `<label class="chk"><input type="checkbox" data-extra="${x.id}" ${(kb.extras || []).includes(x.id) ? 'checked' : ''}>${esc(x.name)}<span class="p">${eur(x.price)}</span></label>`).join('')}</div>
-      <div class="hint">Tipp: In der 3D-Ansicht „Tastatur“ einfach auf deiner echten Tastatur tippen oder Tasten anklicken – Sound ändert sich mit Switch, Plate, Case und Mods.</div>
+      <div class="hint">Tipp: In der 3D-Ansicht „Tastatur“ auf deiner echten Tastatur tippen oder Tasten anklicken. Jedes Teil verändert den Sound – nach jeder Änderung hörst du kurz eine Probe.</div>
+    </div></div>
+    ${soundCard(kb)}`;
+}
+
+function soundCard(kb) {
+  const p = soundProfile(kb);
+  const tr = soundTraits(p);
+  const cs = kbItem('cases', kb.caseId), pl = kbItem('plates', kb.plateId), st = kbItem('stabs', kb.stabId), cap = kbItem('caps', kb.capsId), pcb = kbItem('pcbs', kb.pcbId);
+  const who = [
+    ['Case', cs.sound], ['Plate', pl.info], ['Keycaps', `${cap.mat} · ${cap.mat === 'PBT' ? 'tiefer, matter' : 'heller, „clacky“'}${cap.h > 0.55 ? ' · hohes Profil = tiefer' : ''}`],
+    ['Stabis', st.info], ['PCB', pcb.he ? 'Hall-Effect' : pcb.id === 'kpcb-solder' ? 'gelötet · etwas satter' : 'Hot-Swap · minimal Sockel-Pling'],
+  ];
+  return `<div class="section"><div class="section-h"><span>Sound-Profil</span><span>${esc(tr.word)}</span></div>
+    <div class="card snd">
+      <div class="snd-bars">${tr.bars.map(([n, v]) => `<div class="snd-row"><span>${n}</span><div class="snd-bar"><i style="width:${Math.round(v * 100)}%"></i></div></div>`).join('')}</div>
+      <div class="snd-who">${who.map(([k, v]) => `<div><b>${k}</b> ${esc(v || '')}</div>`).join('')}</div>
+      <button class="btn primary" data-act="kbdemo">▶ Probe hören</button>
     </div></div>`;
 }
+
+function mountSwitchViz() {
+  const el = document.getElementById('stage-viz');
+  const b = curBuild();
+  const show = !!b && ui.view === 'kb' && !!activeKb(b);
+  el.hidden = !show;
+  $('#stage').classList.toggle('with-viz', show);
+  if (!show) return stopViz();
+  const kb = activeKb(b);
+  const type = ui.svType || kbItem('switches', kb.switchId).type;
+  mountViz(el, {
+    type, sound: ui.svSound,
+    getSound: () => soundProfile(activeKb(curBuild())),
+    onType: (t, snd) => { if (snd !== undefined) { ui.svSound = snd; return; } ui.svType = t; mountSwitchViz(); },
+  });
+}
+function playDemo() { const b = curBuild(); const kb = b && activeKb(b); if (kb && ui.sound) demo(soundProfile(kb)); }
 
 function customerView() {
   const c = curCustomer();
@@ -524,7 +592,7 @@ function customerView() {
 function renderStage() {
   const b = curBuild();
   $('#empty-stage').hidden = !!b;
-  if (!b) { $('#stage-top').innerHTML = ''; $('#stage-bottom').innerHTML = ''; return; }
+  if (!b) { $('#stage-top').innerHTML = ''; $('#stage-bottom').innerHTML = ''; mountSwitchViz(); return; }
   const views = availableViews(b);
   const names = { pc: 'PC', kb: 'Tastatur', setup: 'Setup' };
   const tot = totals(b);
@@ -544,6 +612,7 @@ function renderStage() {
       <div class="small"><span class="status-dot" style="background:${stColor}"></span>${errs ? `${errs} Problem${errs > 1 ? 'e' : ''}` : warns ? `${warns} Hinweis${warns > 1 ? 'e' : ''}` : 'Kompatibel'} · ${esc(b.name)}${tot.units > 1 ? ` · ${tot.units}×` : ''}</div>
     </div>
     ${ui.view === 'kb' ? `<div class="hud type-test"><div class="small">Tipp-Test – einfach lostippen</div><div class="typed"><span id="typed">${esc(ui.typed) || '&nbsp;'}</span></div></div>` : ''}`;
+  mountSwitchViz();
 }
 
 function renderAll() { renderSidebar(); renderConfig(); renderStage(); }
@@ -731,6 +800,7 @@ document.addEventListener('click', (e) => {
       state.builds.push(b); save(); selectBuild(b.id);
       return;
     }
+    case 'kbdemo': return playDemo();
     case 'autofill': return update((b) => autoFill(b));
     case 'quote': return quoteModal();
     case 'used-all': return update((b) => { for (const slot of TYPES[b.type].slots) { const p = sel(b, slot); if (p?.chk?.used && usedOk(slot) && slot !== 'keyboard') b.parts[slot].used = true; } });
@@ -778,13 +848,13 @@ document.addEventListener('change', (e) => {
   }
   if (d.qty) return update((b) => (b.parts[d.qty].qty = Math.max(1, +t.value || 1)));
   if (d.price !== undefined) return update((b) => (b.parts[d.price].price = t.value === '' ? null : +t.value), { view: false });
-  if (d.kb) return update((b) => (b.kb[d.kb] = t.value));
+  if (d.kb) { if (d.kb === 'switchId') ui.svType = null; update((b) => (b.kb[d.kb] = t.value)); return playDemo(); }
   if (d.used) return update((b) => (b.parts[d.used].used = t.checked));
   if (d.bench) { const [gid, k, f] = d.bench.split('.'); return update((b) => { b.bench ??= {}; b.bench.games ??= {}; b.bench.games[gid] ??= {}; b.bench.games[gid][k] ??= {}; b.bench.games[gid][k][f] = t.value === '' ? null : +t.value; }, { view: false }); }
   if (d.benchf) return update((b) => { b.bench ??= {}; b.bench[d.benchf] = t.value; }, { view: false });
   if (d.tweak) return update((b) => { b.bench ??= {}; b.bench.tweaks ??= {}; b.bench.tweaks[d.tweak] = t.checked; }, { view: false });
   if (d.tweakv) return update((b) => { b.bench ??= {}; b.bench.tweaks ??= {}; b.bench.tweaks[d.tweakv + '_v'] = t.value; b.bench.tweaks[d.tweakv] = true; }, { view: false });
-  if (d.extra) return update((b) => { const s = new Set(b.kb.extras || []); t.checked ? s.add(d.extra) : s.delete(d.extra); b.kb.extras = [...s]; });
+  if (d.extra) { update((b) => { const s = new Set(b.kb.extras || []); t.checked ? s.add(d.extra) : s.delete(d.extra); b.kb.extras = [...s]; }); return playDemo(); }
   if (d.color) return update((b) => { if (d.color === 'case') b.kb.caseColor = t.value; else b.kb.colors[d.color] = t.value; });
   if (d.f) {
     return update((b) => {
