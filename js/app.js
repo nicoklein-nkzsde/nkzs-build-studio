@@ -26,7 +26,7 @@ function toggleTheme() {
 
 let state = load();
 state.settings = { webFee: 50, requestEmail: 'nicoklein@nkzs.de', ...state.settings };
-const ui = { customerId: null, buildId: null, view: null, rgb: false, autoRotate: false, sound: true, search: '', typed: '' };
+const ui = { mview: 'cfg', customerId: null, buildId: null, view: null, rgb: false, autoRotate: false, sound: true, search: '', typed: '' };
 
 function seed() {
   const me = { id: uid(), name: 'Meine Sammlung', company: 'Eigene Builds & Tastaturen', email: '', phone: '', address: '', notes: '', created: Date.now() };
@@ -462,6 +462,7 @@ function renderTopbar() {
       <button class="btn ghost" data-act="theme" title="Helles/dunkles Design">${document.documentElement.dataset.theme === 'dark' ? 'Hell' : 'Dunkel'}</button>
       <button class="btn ghost" data-act="settings">Einstellungen</button>
       <button class="btn ghost" data-act="backup">Backup</button>
+      <button class="btn tb-menu" data-act="mmenu" aria-label="Menü">Menü</button>
     </div>`;
   setSaveState(saveState);
 }
@@ -509,6 +510,10 @@ function renderConfig() {
       <div class="field"><textarea data-f="notes" placeholder="Wünsche des Kunden, Budget, Farben, Liefertermin…">${esc(b.notes)}</textarea></div>
     </div>
 
+    <div class="m-sum"><div><b>${eur(tot.total)}</b><small>${ch.some((x) => x.level === 'error') ? 'Probleme prüfen' : 'Kompatibel'}${tot.units > 1 ? ` · ${tot.units}×` : ''}</small></div>
+      <button class="btn" data-mgo="3d">3D</button>
+      ${IN_ARTIFACT ? '<button class="btn primary" data-act="quote">Angebot</button>' : '<button class="btn primary" data-act="request">Anfragen</button>'}
+    </div>
     <div class="btns">
       ${IN_ARTIFACT ? '' : '<button class="btn primary grow" data-act="request">Build anfragen</button>'}
       <button class="btn ${IN_ARTIFACT ? 'primary grow' : ''}" data-act="quote">Angebot erstellen</button>
@@ -717,7 +722,33 @@ function renderStage() {
   mountSwitchViz();
 }
 
-function renderAll() { renderTopbar(); renderSidebar(); renderConfig(); renderStage(); }
+function renderAll() { renderTopbar(); renderSidebar(); renderConfig(); renderStage(); renderMnav(); }
+
+// Handy: untere Navigation (Builds / Konfiguration / 3D)
+const ICONS = {
+  list: '<svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>',
+  cfg: '<svg viewBox="0 0 24 24"><path d="M5 4v16M12 4v16M19 4v16"/><circle cx="5" cy="9" r="2"/><circle cx="12" cy="15" r="2"/><circle cx="19" cy="7" r="2"/></svg>',
+  '3d': '<svg viewBox="0 0 24 24"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg>',
+};
+function renderMnav() {
+  $('#app').dataset.mview = ui.mview;
+  const has = !!curBuild();
+  $('#mnav').innerHTML = [['list', 'Builds'], ['cfg', has ? 'Konfiguration' : 'Kunde'], ['3d', '3D-Ansicht']]
+    .map(([k, l]) => `<button data-mgo="${k}" class="${ui.mview === k ? 'on' : ''}" ${k === '3d' && !has ? 'disabled style="opacity:.4"' : ''}>${ICONS[k]}<span>${l}</span></button>`).join('');
+}
+function goMobile(v) { ui.mview = v; renderMnav(); if (v === '3d') setTimeout(() => render3D(false), 80); }
+function mobileMenu() {
+  const b = curBuild(), dark = document.documentElement.dataset.theme === 'dark';
+  modal('Menü', `<div class="m-menu">
+    ${b ? '<button class="btn primary" data-act="quote">Angebot erstellen</button>' : ''}
+    ${b && !IN_ARTIFACT ? '<button class="btn" data-act="request">Build anfragen</button>' : ''}
+    ${b ? '<button class="btn" data-act="shopping">Einkaufsliste</button>' : ''}
+    <button class="btn" data-act="theme">${dark ? 'Helles Design' : 'Dunkles Design'}</button>
+    <button class="btn" data-act="settings">Einstellungen</button>
+    <button class="btn" data-act="backup">Backup</button>
+    <p class="hint" style="margin:6px 0 0">${{ cloud: 'Online gespeichert', local: 'Daten liegen in diesem Browser', saving: 'Speichert …', error: 'Speichern fehlgeschlagen' }[saveState]}</p>
+  </div>`, { small: true });
+}
 
 // ---------- Modals ----------
 let pendingConfirm = null;
@@ -1102,9 +1133,10 @@ function importFromHash() {
 
 // ---------- Events ----------
 document.addEventListener('click', (e) => {
-  const a = e.target.closest('[data-act],[data-view],[data-tgl],[data-layout],[data-preset],[data-new],[data-tpl],[data-fix],[data-kbfix]');
+  const a = e.target.closest('[data-act],[data-view],[data-tgl],[data-layout],[data-preset],[data-new],[data-tpl],[data-fix],[data-kbfix],[data-mgo]');
   if (!a) return;
   const d = a.dataset;
+  if (d.mgo) { closeModal(); return goMobile(d.mgo); }
   if (d.fix) { const [slot, id] = d.fix.split(':'); return update((b) => (b.parts[slot] = { id, qty: b.parts[slot]?.qty || 1, price: null })); }
   if (d.kbfix) return update((b) => Object.assign(b.kb, JSON.parse(d.kbfix)));
   if (d.view) { ui.view = d.view; renderStage(); schedule3D(false); return; }
@@ -1114,12 +1146,13 @@ document.addEventListener('click', (e) => {
   if (d.new || d.tpl) {
     const t = d.tpl ? TEMPLATES[+d.tpl] : { type: d.new, name: `Neuer ${TYPES[d.new].short}`, parts: {} };
     const b = fromTemplate(t, ui.customerId);
-    state.builds.push(b); save(); closeModal(); selectBuild(b.id);
+    state.builds.push(b); save(); closeModal(); ui.mview = 'cfg'; selectBuild(b.id);
     return;
   }
   switch (d.act) {
     case 'customer': return selectCustomer(d.id);
-    case 'build': return selectBuild(d.id);
+    case 'build': ui.mview = 'cfg'; return selectBuild(d.id);
+    case 'mmenu': return mobileMenu();
     case 'new-customer': {
       const c = { id: uid(), name: 'Neuer Kunde', company: '', email: '', phone: '', address: '', notes: '', created: Date.now() };
       state.customers.unshift(c); save(); selectCustomer(c.id);
@@ -1151,7 +1184,7 @@ document.addEventListener('click', (e) => {
     }
     case 'kbdemo': return playDemo();
     case 'autofill': return update((b) => autoFill(b));
-    case 'theme': return toggleTheme();
+    case 'theme': closeModal(); return toggleTheme();
     case 'quote': return quoteModal();
     case 'request': return requestModal();
     case 'used-all': return update((b) => { for (const slot of TYPES[b.type].slots) { const p = sel(b, slot); if (p?.chk?.used && usedOk(slot) && slot !== 'keyboard') b.parts[slot].used = true; } });
@@ -1259,4 +1292,6 @@ Viewer.setOpts({ rgb: ui.rgb, autoRotate: ui.autoRotate, sound: ui.sound });
 const first = state.builds[0];
 if (first) selectBuild(first.id); else renderAll();
 importFromHash();
+if (!IN_ARTIFACT) document.documentElement.classList.add('standalone');
+renderMnav();
 initDb();

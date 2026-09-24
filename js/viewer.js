@@ -538,7 +538,8 @@ function clear() {
 
 function fitDist(w, h) {
   const t = Math.tan((camera.fov * Math.PI) / 360);
-  return Math.max(h / 2 / t, w / 2 / (t * camera.aspect));
+  const portrait = camera.aspect < 1 ? 1.1 : 1; // Handy hochkant: mehr Rand, Schrägansicht wirkt vorne breiter
+  return Math.max(h / 2 / t, (w * portrait) / 2 / (t * camera.aspect));
 }
 
 function frame(target, pos, shadow) {
@@ -554,6 +555,7 @@ function frame(target, pos, shadow) {
 
 // data: { mode, pc, kb, setup }, keepCam: Kamera behalten wenn nur Details geändert
 export function show(data, keepCam = false) {
+  resize(); // Seitenverhältnis aktualisieren, falls die Ansicht gerade erst sichtbar wurde (Handy-Tabs)
   const prevMode = mode;
   mode = data.mode;
   clear();

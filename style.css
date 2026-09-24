@@ -368,19 +368,94 @@ textarea { resize: vertical; min-height: 64px; }
   #stage.with-viz #viewer { bottom: 344px; }
   #stage.with-viz #stage-bottom { bottom: 356px; }
 }
+/* ---------- Handy / iPhone: App-Layout mit unterer Navigation ---------- */
+:root { --sat: 0px; --sab: 0px; }
+.standalone { --sat: env(safe-area-inset-top, 0px); --sab: env(safe-area-inset-bottom, 0px); }
+#mnav, .m-sum, .tb-menu { display: none; }
 @media (max-width: 860px) {
-  html, body { height: auto; }
-  #app { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto auto 70vh; height: auto; }
-  #topbar { flex-wrap: wrap; padding: 10px 16px; gap: 8px; }
+  html, body { height: 100%; overflow: hidden; }
+  #app { height: 100dvh; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto; }
+  #topbar { grid-row: 1; padding: calc(8px + var(--sat)) 16px 8px; gap: 10px; min-height: 52px; }
   .tb-brand { width: auto; }
-  .tb-crumbs { order: 3; flex-basis: 100%; }
-  #sidebar { max-height: 38vh; border-right: 0; border-bottom: 1px solid var(--line); }
-  #config { border-right: 0; }
-  #stage { height: 70vh; }
-  .cfg { padding-inline: 16px; }
+  .tb-brand span { display: none; }
+  .tb-crumbs > span, .tb-crumbs .sep { display: none; }
+  .tb-crumbs b { font-size: 14px; }
+  .tb-actions .btn, .tb-save { display: none; }
+  .tb-actions .tb-menu { display: inline-flex; }
+  #sidebar, #config, #stage { grid-row: 2; grid-column: 1; min-height: 0; }
+  #app:not([data-mview="list"]) #sidebar,
+  #app:not([data-mview="cfg"]) #config,
+  #app:not([data-mview="3d"]) #stage { display: none; }
+  #sidebar { max-height: none; border-right: 0; }
+  #config { border-right: 0; -webkit-overflow-scrolling: touch; }
+  .cfg { padding: 14px 16px 16px; }
+
+  /* untere Navigation */
+  #mnav { display: grid; grid-row: 3; grid-template-columns: repeat(3, 1fr); background: var(--panel); border-top: 1px solid var(--line); padding-bottom: var(--sab); }
+  #mnav button { background: none; border: 0; min-height: 54px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: var(--dim); font-size: 11px; font-weight: 500; }
+  #mnav button svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.6; }
+  #mnav button.on { color: var(--accent); }
+
+  /* Preisleiste in der Konfiguration */
+  .m-sum { display: flex; position: sticky; bottom: 0; z-index: 5; align-items: center; gap: 10px; margin: 20px -16px -16px; padding: 10px 16px; background: var(--panel); border-top: 1px solid var(--line); box-shadow: 0 -6px 20px rgba(0,0,0,.06); }
+  .m-sum div { flex: 1; min-width: 0; }
+  .m-sum b { display: block; font: 600 17px/1.2 var(--mono); }
+  .m-sum small { color: var(--muted); font-size: 11.5px; }
+
+  /* iOS zoomt bei Schrift < 16 px in Felder – verhindern */
+  input, select, textarea, select.big, .field input, .field select, .field textarea, .mini, .pill select, .pill input, .side-search input { font-size: 16px; }
+  .title-input { font-size: 20px; }
+  .mini { width: 56px; padding: 5px 6px; } .mini.price { width: 84px; }
+  .pill input { width: 48px; }
+
+  /* große Tipp-Flächen */
+  button, a, label, select, input { touch-action: manipulation; }
+  .btn { min-height: 44px; padding: 10px 14px; font-size: 14px; }
+  .fix { min-height: 38px; padding: 7px 11px; font-size: 13px; }
+  .seg button, .sv-tabs button { min-height: 40px; font-size: 13px; }
+  .tabs button, .tgl { min-height: 38px; font-size: 13px; }
+  .build-item, .cust-row { min-height: 48px; }
+  .icon-btn { width: 36px; height: 36px; font-size: 18px; }
+  .chk { min-height: 36px; font-size: 13.5px; }
+  .preset { min-height: 34px; }
+  .color input { height: 38px; }
+  .slot-meta { flex-wrap: wrap; }
+  .price-line { font-size: 12.5px; }
+  .pl-used { min-height: 30px; }
+
+  /* 3D-Bereich: Ansicht oben, Switch-Erklärung darunter scrollbar */
+  #stage { overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  #viewer, #stage.with-viz #viewer { position: relative; inset: auto; height: min(60dvh, 520px); }
+  #stage-bottom, #stage.with-viz #stage-bottom { top: calc(min(60dvh, 520px) - 76px); bottom: auto; }
+  .type-test { display: none; }
+  #stage-viz { position: static; display: grid; height: auto; margin: 12px; grid-template-columns: minmax(0, 1fr); grid-template-rows: none; }
+  #stage-viz[hidden] { display: none; }
+  #stage-viz .sv-head, #stage-viz .sv-tabs, #stage-viz .sv-svg, #stage-viz .sv-ctrl, #stage-viz .sv-text { grid-column: 1; grid-row: auto; }
+  #stage-viz .sv-svg { max-height: none; height: auto; }
+  #stage-viz .sv-text { display: block; overflow: visible; margin-top: 10px; }
+  #empty-stage { position: relative; min-height: 60dvh; }
+
+  /* Fenster als Bottom-Sheets */
+  .modal-bg { place-items: end center; padding: 0; }
+  .modal, .modal.wide, .modal.small { width: 100%; max-height: 92dvh; border-radius: 14px 14px 0 0; padding-bottom: var(--sab); }
+  .modal-h { padding: 14px 16px; }
+  .modal-b { padding: 14px 16px 20px; }
   .type-cards { grid-template-columns: 1fr; }
-  #stage-viz { display: none; }
-  #stage.with-viz #viewer { bottom: 0; }
-  #stage.with-viz #stage-bottom { bottom: 12px; }
+  .quote { padding: 18px 16px; font-size: 12px; }
+  .quote .q-head, .quote .q-head + div { flex-direction: column; gap: 10px; }
+  .quote .q-from, .quote .q-head + div > div:last-child { text-align: left !important; }
+  .row2 { grid-template-columns: 1fr; }
+  .m-menu { display: grid; gap: 8px; }
+  .m-menu .btn { justify-content: flex-start; }
+
+  /* Benchmarks: Spielname über den Feldern */
+  .bench-head { display: none; }
+  .bench-row { grid-template-columns: repeat(4, minmax(0, 1fr)) auto; }
+  .bench-row > span:first-child { grid-column: 1 / -1; }
+  .bench-row .mini { width: 100%; }
+  .bench-row .mini::placeholder { font-size: 11px; }
+  .bench-tweaks { grid-template-columns: 1fr; }
+  .snd-row { grid-template-columns: 110px 1fr; }
+  #toast { bottom: calc(70px + var(--sab)); }
 }
 .pick { display: inline-block; font: 600 9.5px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--accent); border: 1px solid var(--accent); border-radius: 3px; padding: 2px 4px; margin-right: 4px; vertical-align: 1px; }
