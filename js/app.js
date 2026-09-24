@@ -33,8 +33,9 @@ function save() { try { localStorage.setItem(LS, JSON.stringify(state)); } catch
 function fromTemplate(t, customerId, name) {
   const parts = {};
   for (const [slot, id] of Object.entries(t.parts || {})) parts[slot] = { id, qty: 1, price: null };
+  if (t.usedAll) for (const [slot, v] of Object.entries(parts)) if (USED_ADVICE[slot]?.[0] !== 'no') v.used = true;
   return {
-    id: uid(), customerId, name: name || t.name, type: t.type, status: 'Entwurf', parts, units: t.units || 1,
+    id: uid(), customerId, name: name || t.name, type: t.type, status: 'Entwurf', parts, units: t.units || 1, quoteUsed: !!t.usedAll,
     kb: { ...clone(DEFAULT_KB), ...clone(t.kb || {}) }, service: null, notes: '', created: Date.now(), updated: Date.now(),
   };
 }
@@ -139,43 +140,97 @@ function checks(b) {
   const out = [];
   const t = TYPES[b.type];
   const g = (s) => sel(b, s);
+  // key = Art des Problems (für Lösungsvorschläge), fix = welche Slots getauscht werden können (bevorzugt zuerst)
+  const E = (key, fix, text, level = 'error') => out.push({ level, key, fix, slots: fix, text });
   if (t.slots.includes('cpu')) {
     const cpu = g('cpu'), mb = g('mobo'), ram = g('ram'), gpu = g('gpu'), psu = g('psu'), cs = g('case'), cl = g('cooler');
-    const miss = ['cpu', 'mobo', 'ram', 'storage', 'psu', 'case'].filter((s) => !g(s)).map((s) => SLOT_LABELS[s]);
-    if (miss.length) out.push({ level: 'warn', text: `Fehlt noch: ${miss.join(', ')}` });
-    if (cpu && mb && cpu.socket && mb.socket && cpu.socket !== mb.socket) out.push({ level: 'error', slots: ['cpu', 'mobo'], text: `Sockel passt nicht: CPU ist ${cpu.socket}, Mainboard ist ${mb.socket}.` });
-    if (ram && mb && ram.ramType && mb.ram && ram.ramType !== mb.ram) out.push({ level: 'error', slots: ['ram', 'mobo'], text: `RAM-Typ passt nicht: Mainboard braucht ${mb.ram}, gewählt ist ${ram.ramType}.` });
-    if (ram && mb && ram.sticks === 4 && mb.ff === 'ITX') out.push({ level: 'error', slots: ['ram', 'mobo'], text: 'Mini-ITX-Boards haben nur 2 RAM-Slots.' });
-    if (mb && cs && cs.ff && mb.ff && !cs.ff.includes(mb.ff)) out.push({ level: 'error', slots: ['mobo', 'case'], text: `Mainboard (${mb.ff}) passt nicht ins Gehäuse (nur ${cs.ff.join('/')}).` });
-    if (gpu && cs && cs.maxGpu && gpu.len > cs.maxGpu) out.push({ level: 'error', slots: ['gpu', 'case'], text: `Grafikkarte zu lang: ${gpu.len} mm, Gehäuse erlaubt ${cs.maxGpu} mm.` });
+    const miss = ['cpu', 'mobo', 'ram', 'storage', 'psu', 'case'].filter((s) => !g(s));
+    if (miss.length) out.push({ level: 'warn', key: 'missing', text: `Fehlt noch: ${miss.map((s) => SLOT_LABELS[s]).join(', ')}`, autofill: true });
+    if (cpu && mb && cpu.socket && mb.socket && cpu.socket !== mb.socket) E('socket', ['mobo', 'cpu'], `Sockel passt nicht: CPU ist ${cpu.socket}, Mainboard ist ${mb.socket}.`);
+    if (ram && mb && ram.ramType && mb.ram && ram.ramType !== mb.ram) E('ramtype', ['ram', 'mobo'], `RAM-Typ passt nicht: Mainboard braucht ${mb.ram}, gewählt ist ${ram.ramType}.`);
+    if (ram && mb && ram.sticks === 4 && mb.ff === 'ITX') E('ramslots', ['ram'], 'Mini-ITX-Boards haben nur 2 RAM-Slots.');
+    if (mb && cs && cs.ff && mb.ff && !cs.ff.includes(mb.ff)) E('mbff', ['mobo', 'case'], `Mainboard (${mb.ff}) passt nicht ins Gehäuse (nur ${cs.ff.join('/')}).`);
+    if (gpu && cs && cs.maxGpu && gpu.len > cs.maxGpu) E('gpulen', ['gpu', 'case'], `Grafikkarte zu lang: ${gpu.len} mm, Gehäuse erlaubt ${cs.maxGpu} mm.`);
+    const gThick = gpu ? Math.round((gpu.slots || 2) * 20.3) : 0;
+    if (gpu && cs?.gpuThick && gThick > cs.gpuThick) E('gputhick', ['gpu', 'case'], `Grafikkarte zu dick: ca. ${gThick} mm (${gpu.slots} Slots), Gehäuse erlaubt ${cs.gpuThick} mm.`);
     if (cl && cs) {
-      if ((cl.kind === 'air' || cl.kind === 'low') && cs.maxCooler && cl.height > cs.maxCooler) out.push({ level: 'error', slots: ['cooler', 'case'], text: `Kühler zu hoch: ${cl.height} mm, Gehäuse erlaubt ${cs.maxCooler} mm.` });
-      if (cl.kind === 'aio' && cs.maxRad !== undefined && cl.rad > cs.maxRad) out.push({ level: 'error', slots: ['cooler', 'case'], text: cs.maxRad ? `Radiator zu groß: ${cl.rad} mm, Gehäuse erlaubt ${cs.maxRad} mm.` : 'In dieses Gehäuse passt keine AiO-Wasserkühlung.' });
+      if ((cl.kind === 'air' || cl.kind === 'low') && cs.maxCooler && cl.height > cs.maxCooler) E('coolerh', ['cooler', 'case'], `Kühler zu hoch: ${cl.height} mm, Gehäuse erlaubt ${cs.maxCooler} mm.`);
+      if (cl.kind === 'aio' && cs.maxRad !== undefined && cl.rad > cs.maxRad) E('rad', ['cooler', 'case'], cs.maxRad ? `Radiator zu groß: ${cl.rad} mm, Gehäuse erlaubt ${cs.maxRad} mm.` : 'In dieses Gehäuse passt keine AiO-Wasserkühlung.');
+      else if (cl.kind === 'aio' && cs.radThick && cl.radThick && cl.radThick + 25 > cs.radThick) E('radthick', ['cooler', 'case'], `Radiator zu dick: ${cl.radThick} mm + 25-mm-Lüfter = ${cl.radThick + 25} mm, Platz sind nur ${cs.radThick} mm.`);
     }
-    if (psu && cs && cs.psu === 'SFX' && psu.ff !== 'SFX') out.push({ level: 'error', slots: ['psu', 'case'], text: 'Gehäuse braucht ein SFX-Netzteil.' });
+    if (cl && cpu && cl.sockets && !cl.sockets.includes(cpu.socket)) E('coolsock', ['cooler'], `Kühler passt nicht auf Sockel ${cpu.socket}.`);
+    if (cl?.kind === 'low' && cl.height < 50 && cpu && cpu.tdp > 90) out.push({ level: 'warn', key: 'lowcool', fix: ['cooler'], text: `Kühler zu schwach für diese CPU (${cpu.tdp} W) – sie wird heiß und taktet runter.` });
+    if (psu && cs && cs.psu === 'SFX' && psu.ff !== 'SFX') E('psuff', ['psu'], 'Gehäuse braucht ein SFX-Netzteil.');
     if (cpu) {
       const est = (cpu.tdp || 100) + (gpu?.tdp || 0) + 75;
       const rec = Math.ceil((est * 1.4) / 50) * 50;
-      if (psu && psu.watt < est) out.push({ level: 'error', slots: ['psu', 'gpu', 'cpu'], text: `Netzteil zu schwach: ca. ${est} W Verbrauch, Netzteil hat ${psu.watt} W.` });
-      else if (psu && psu.watt < rec) out.push({ level: 'warn', text: `Netzteil knapp: empfohlen sind ${rec} W (Verbrauch ca. ${est} W).` });
+      if (psu && psu.watt < est) E('psuweak', ['psu'], `Netzteil zu schwach: ca. ${est} W Verbrauch, Netzteil hat ${psu.watt} W.`);
+      else if (psu && psu.watt < rec) out.push({ level: 'warn', key: 'psutight', fix: ['psu'], text: `Netzteil knapp: empfohlen sind ${rec} W (Verbrauch ca. ${est} W).` });
       else out.push({ level: 'info', text: `Geschätzter Verbrauch unter Last: ca. ${est} W${psu ? ` · Netzteil ${psu.watt} W` : ''}` });
-      if (!gpu && !cpu.igpu) out.push({ level: 'error', slots: ['gpu', 'cpu'], text: 'Diese CPU hat keine eingebaute Grafik – Grafikkarte nötig.' });
-      if (!cl) out.push({ level: 'warn', text: 'Kein CPU-Kühler gewählt.' });
+      if (!gpu && !cpu.igpu) E('nogpu', ['gpu'], 'Diese CPU hat keine eingebaute Grafik – Grafikkarte nötig.');
+      if (!cl) out.push({ level: 'warn', key: 'nocooler', fix: ['cooler'], text: 'Kein CPU-Kühler gewählt.' });
+    }
+    if (cs?.sff) {
+      if (cs.spine && gpu && cl && (cl.kind === 'air' || cl.kind === 'low') && gThick + cl.height > 125) out.push({ level: 'warn', key: 'spine', text: `${cs.name}: Die verstellbare Mittelwand teilt den Platz – dicke GPU (${gThick} mm) und hoher Kühler (${cl.height} mm) gehen evtl. nicht gleichzeitig. Vor dem Kauf ausmessen.` });
+      if (gpu) out.push({ level: 'info', text: `Mini-Gehäuse: Beim genauen GPU-Modell auf max. ${cs.maxGpu} mm Länge, ${cs.gpuHeight || '–'} mm Höhe und ${cs.gpuThick || '–'} mm Dicke achten. „SFF-Ready“-Karten passen fast immer.` });
     }
   }
-  if (t.slots.includes('monitor') && !g('monitor')) out.push({ level: 'warn', text: 'Noch kein Monitor gewählt.' });
-  if (b.type === 'workstation' && !g('minipc')) out.push({ level: 'warn', text: 'Noch kein Mini-PC gewählt.' });
+  if (t.slots.includes('monitor') && !g('monitor')) out.push({ level: 'warn', key: 'nomon', fix: ['monitor'], text: 'Noch kein Monitor gewählt.' });
+  if (b.type === 'workstation' && !g('minipc')) out.push({ level: 'warn', key: 'nomini', fix: ['minipc'], text: 'Noch kein Mini-PC gewählt.' });
   const kb = activeKb(b);
   if (kb && (TYPES[b.type].kb || sel(b, 'keyboard')?.custom)) {
-    if (kb.capsId === 'kk-low') out.push({ level: 'warn', text: 'Low-Profile-Keycaps passen nicht auf normale MX-Switches.' });
+    if (kb.capsId === 'kk-low') out.push({ level: 'warn', text: 'Low-Profile-Keycaps passen nicht auf normale MX-Switches.', kbfix: { capsId: 'kk-cherry' }, kbfixText: 'Cherry-Profil nehmen' });
     const swi = kbItem('switches', kb.switchId), pcbi = kbItem('pcbs', kb.pcbId);
-    if (swi.magnetic && !pcbi.he) out.push({ level: 'error', text: 'Magnet-Switches brauchen ein Hall-Effect-PCB.' });
-    if (!swi.magnetic && pcbi.he) out.push({ level: 'error', text: 'Hall-Effect-PCB funktioniert nur mit Magnet-Switches.' });
+    if (swi.magnetic && !pcbi.he) out.push({ level: 'error', text: 'Magnet-Switches brauchen ein Hall-Effect-PCB.', kbfix: { pcbId: 'kpcb-he' }, kbfixText: 'Hall-Effect-PCB nehmen' });
+    if (!swi.magnetic && pcbi.he) out.push({ level: 'error', text: 'Hall-Effect-PCB funktioniert nur mit Magnet-Switches.', kbfix: { switchId: 'sw-ks20' }, kbfixText: 'Gateron KS-20 Magnet-Switches nehmen' });
     if (kb.pcbId === 'kpcb-solder' && (kb.extras || []).includes('kx-lube')) out.push({ level: 'info', text: 'Löt-PCB: Switches vor dem Einlöten lubben.' });
   }
   if (!out.some((o) => o.level === 'error' || o.level === 'warn')) out.unshift({ level: 'ok', text: 'Alles kompatibel.' });
   return out;
 }
+
+// Lösungsvorschläge: Teile, die genau dieses Problem beheben, ohne ein neues zu verursachen
+const swap = (b, slot, id) => ({ ...b, parts: { ...b.parts, [slot]: { id, qty: b.parts[slot]?.qty || 1, price: null } } });
+function fixesFor(b, issue, max = 3) {
+  if (!issue.fix) return [];
+  const before = checks(b);
+  const errKeys = new Set(before.filter((c) => c.level === 'error').map((c) => c.key));
+  const warnKeys = new Set(before.filter((c) => c.level === 'warn').map((c) => c.key));
+  for (const slot of issue.fix) {
+    const cur = sel(b, slot);
+    const cands = [];
+    for (const p of catalogFor(slot)) {
+      if (p.id === cur?.id || p.custom || p.own) continue;
+      const after = checks(swap(b, slot, p.id));
+      if (after.some((c) => c.key === issue.key)) continue;
+      // keine neuen Fehler; aus einem Fehler darf höchstens ein Hinweis werden
+      if (after.some((c) => c.level === 'error' && !errKeys.has(c.key))) continue;
+      const newWarns = after.filter((c) => c.level === 'warn' && c.key && !warnKeys.has(c.key)).length;
+      if (issue.level === 'warn' && newWarns) continue;
+      cands.push({ p, newWarns });
+    }
+    const ref = cur?.price ?? 0;
+    cands.sort((a, c) => a.newWarns - c.newWarns || (ref ? Math.abs(a.p.price - ref) - Math.abs(c.p.price - ref) : a.p.price - c.p.price));
+    // Erst das naheliegende Teil tauschen (z. B. Kühler statt Gehäuse) – nur wenn das nicht geht, das nächste
+    if (cands.length) return cands.slice(0, max).map(({ p }) => ({ slot, p }));
+  }
+  return [];
+}
+
+// Leere Pflicht-Plätze mit dem günstigsten passenden Teil füllen
+function autoFill(b) {
+  const order = ['case', 'cpu', 'mobo', 'ram', 'cooler', 'gpu', 'storage', 'psu'];
+  for (const slot of order) {
+    if (!TYPES[b.type].slots.includes(slot) || sel(b, slot)) continue;
+    const cands = catalogFor(slot).filter((p) => !p.custom && !p.own).map((p) => {
+      const res = checks(swap(b, slot, p.id));
+      const bad = res.some((c) => (c.level === 'error' || (c.level === 'warn' && c.key !== 'missing' && c.key !== 'nocooler' && c.key !== 'spine')) && (c.slots || c.fix || []).includes(slot));
+      return { p, bad };
+    }).filter((x) => !x.bad).sort((a, c) => a.p.price - c.p.price);
+    if (cands[0]) b.parts[slot] = { id: cands[0].p.id, qty: 1, price: null };
+  }
+}
+
 function issueFor(b, slot, id) {
   const tmp = { ...b, parts: { ...b.parts, [slot]: { id, qty: 1, price: null } } };
   return checks(tmp).find((c) => c.level === 'error' && c.slots?.includes(slot));
@@ -296,7 +351,7 @@ function renderConfig() {
       <span class="pill" title="Anzahl identischer Systeme">Anzahl <input type="number" min="1" data-f="units" value="${b.units || 1}"></span>
     </div>
 
-    <div class="section"><div class="checks">${ch.map((x) => `<div class="check ${x.level}"><i>${{ ok: '✓', warn: '!', error: '✕', info: 'i' }[x.level]}</i><span>${esc(x.text)}</span></div>`).join('')}</div></div>
+    <div class="section"><div class="checks">${ch.map((x) => checkRow(b, x)).join('')}</div></div>
 
     ${t.slots.length ? `<div class="section"><div class="section-h"><span>Komponenten</span><span>${CHECKED ? `Preise geprüft ${fmtDate(CHECKED)}` : "Richtpreise"}</span></div>
       <div class="card">${t.slots.map((s) => slotRow(b, s)).join('')}</div></div>` : ''}
@@ -330,6 +385,23 @@ function renderConfig() {
   el.scrollTop = scroll;
 }
 
+function checkRow(b, x) {
+  const icon = { ok: '✓', warn: '!', error: '✕', info: 'i' }[x.level];
+  let help = '';
+  if (x.level === 'error' || x.level === 'warn') {
+    const fx = fixesFor(b, x);
+    if (fx.length) {
+      help = `<div class="fixes"><span>Stattdessen:</span>${fx.map(({ slot, p }) => {
+        const cur = sel(b, slot); const d = p.price - (cur?.newPrice ?? cur?.price ?? 0);
+        return `<button class="fix" data-fix="${slot}:${p.id}" title="${esc(SLOT_LABELS[slot])} tauschen">${esc(p.name)} <b>${eur(p.price).replace(',00', '')}</b>${cur ? `<small>${d >= 0 ? '+' : '−'}${eur(Math.abs(d)).replace(',00', '')}</small>` : ''}</button>`;
+      }).join('')}</div>`;
+    }
+    if (x.kbfix) help = `<div class="fixes"><span>Lösung:</span><button class="fix" data-kbfix='${JSON.stringify(x.kbfix)}'>${esc(x.kbfixText)}</button></div>`;
+    if (x.autofill) help += `<div class="fixes"><button class="fix auto" data-act="autofill">Automatisch passend ergänzen</button></div>`;
+  }
+  return `<div class="check ${x.level}"><i>${icon}</i><div style="flex:1;min-width:0"><span>${esc(x.text)}</span>${help}</div></div>`;
+}
+
 function slotRow(b, slot) {
   const s = b.parts[slot] || {};
   const p = sel(b, slot);
@@ -356,6 +428,8 @@ function priceLine(slot, p, s) {
   const adv = USED_ADVICE[slot] || ['warn', ''];
   const idealo = c?.url || `https://www.idealo.de/preisvergleich/MainSearchProductCategory.html?q=${encodeURIComponent(p.name)}`;
   const ka = `https://www.kleinanzeigen.de/s-${encodeURIComponent(p.name.toLowerCase().replace(/\(.*?\)/g, '').trim().replace(/\s+/g, '-'))}/k0`;
+  if (slot === 'os' || slot === 'office') return `<div class="price-line"><span class="pl-new">Offizielle Lizenz · keine Graumarkt-Keys (die gibt es „ab 3 €“ – Finger weg)</span></div>`;
+  if (c?.usedOnly) return `<div class="price-line"><span class="pl-new warn">Neu kaum noch erhältlich · Preis = gebraucht (Median aus ${c.usedN} Kleinanzeigen, ${fmtDate(c.usedDate)})</span><a href="${ka}" target="_blank" rel="noopener">Kleinanz. ↗</a></div>`;
   const nw = c ? `<span class="pl-new" title="${esc(c.product || '')}">Neu ${eur(c.price)} · ${esc(c.shop || '')} · ${fmtDate(c.date)}</span>` : `<span class="pl-new warn">Richtpreis – noch nicht geprüft</span>`;
   const used = c?.used
     ? `<label class="pl-used ${adv[0]}" title="${esc(adv[1])}${c.usedN ? ` · ${c.usedN} Anzeigen` : ''}"><input type="checkbox" data-used="${slot}" ${s.used ? 'checked' : ''} ${adv[0] === 'no' ? 'disabled' : ''}>gebraucht ~${eur(c.used).replace(',00', '')} <b>−${Math.round((1 - c.used / c.price) * 100)} %</b></label>`
@@ -476,7 +550,7 @@ function renderAll() { renderSidebar(); renderConfig(); renderStage(); }
 
 // ---------- Modals ----------
 function modal(title, body, { wide = false } = {}) {
-  $('#modal-root').innerHTML = `<div class="modal-bg" data-act="close-modal"><div class="modal ${wide ? 'wide' : ''}" onclick="event.stopPropagation()">
+  $('#modal-root').innerHTML = `<div class="modal-bg" data-act="close-modal"><div class="modal ${wide ? 'wide' : ''}">
     <div class="modal-h"><h2>${title}</h2><button class="icon-btn" data-act="close-modal">×</button></div>
     <div class="modal-b">${body}</div></div></div>`;
 }
@@ -488,7 +562,11 @@ function newBuildModal() {
     <div class="type-cards">${types.map(([k, t]) => `<div class="type-card"><b>${typeDot(k)} ${t.label}</b><p>${t.desc}</p>
       <div class="tpl-list">
         <button class="tpl" data-new="${k}">Leer starten</button>
-        ${TEMPLATES.filter((x) => x.type === k).map((x) => `<button class="tpl" data-tpl="${TEMPLATES.indexOf(x)}">${esc(x.name)}<small>${eur(totals(fromTemplate(x, null)).total)}</small></button>`).join('')}
+        ${(() => { let last = null; return TEMPLATES.filter((x) => x.type === k).sort((x, y) => (y.group ? 1 : 0) - (x.group ? 1 : 0)).map((x) => {
+          const head = x.group && x.group !== last ? `<div class="tpl-group">${esc(x.group)} – passt garantiert</div>` : (!x.group && last ? '<div class="tpl-group">Standard</div>' : '');
+          last = x.group || null;
+          return `${head}<button class="tpl" data-tpl="${TEMPLATES.indexOf(x)}">${esc(x.name)}<small>${eur(totals(fromTemplate(x, null)).total)}</small></button>`;
+        }).join(''); })()}
       </div></div>`).join('')}
     </div>`, { wide: true });
 }
@@ -606,9 +684,11 @@ function quoteModal() {
 
 // ---------- Events ----------
 document.addEventListener('click', (e) => {
-  const a = e.target.closest('[data-act],[data-view],[data-tgl],[data-layout],[data-preset],[data-new],[data-tpl]');
+  const a = e.target.closest('[data-act],[data-view],[data-tgl],[data-layout],[data-preset],[data-new],[data-tpl],[data-fix],[data-kbfix]');
   if (!a) return;
   const d = a.dataset;
+  if (d.fix) { const [slot, id] = d.fix.split(':'); return update((b) => (b.parts[slot] = { id, qty: b.parts[slot]?.qty || 1, price: null })); }
+  if (d.kbfix) return update((b) => Object.assign(b.kb, JSON.parse(d.kbfix)));
   if (d.view) { ui.view = d.view; renderStage(); schedule3D(false); return; }
   if (d.tgl) { ui[d.tgl] = !ui[d.tgl]; Viewer.setOpts({ rgb: ui.rgb, autoRotate: ui.autoRotate, sound: ui.sound }); renderStage(); return; }
   if (d.layout) return update((b) => (b.kb.layout = d.layout), { keepCam: false });
@@ -651,6 +731,7 @@ document.addEventListener('click', (e) => {
       state.builds.push(b); save(); selectBuild(b.id);
       return;
     }
+    case 'autofill': return update((b) => autoFill(b));
     case 'quote': return quoteModal();
     case 'used-all': return update((b) => { for (const slot of TYPES[b.type].slots) { const p = sel(b, slot); if (p?.chk?.used && usedOk(slot) && slot !== 'keyboard') b.parts[slot].used = true; } });
     case 'used-none': return update((b) => { for (const s of Object.values(b.parts)) s.used = false; });

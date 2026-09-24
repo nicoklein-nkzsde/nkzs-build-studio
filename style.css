@@ -246,3 +246,13 @@ textarea { resize: vertical; min-height: 64px; }
 .bench-head { color: var(--dim); font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em; }
 .bench-tweaks { padding: 10px 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
 .bench-tweaks .chk { font-size: 11.5px; }
+
+/* Lösungsvorschläge */
+.fixes { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 8px; }
+.fixes > span { font-size: 11.5px; opacity: .8; }
+.fix { display: inline-flex; align-items: baseline; gap: 6px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.14); border-radius: 20px; padding: 4px 10px; font-size: 11.5px; color: var(--text); }
+.fix:hover { background: rgba(255,255,255,.16); }
+.fix b { font-weight: 600; }
+.fix small { color: var(--muted); }
+.fix.auto { background: var(--accent); border-color: var(--accent); color: #fff; }
+.tpl-group { width: 100%; font-size: 11px; color: var(--dim); text-transform: uppercase; letter-spacing: .06em; margin-top: 6px; }

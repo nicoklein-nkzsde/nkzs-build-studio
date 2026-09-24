@@ -1,6 +1,6 @@
 // Automatisch erzeugt vom Preis-Check (tools/merge.mjs). Nicht von Hand bearbeiten.
 // Neupreis = günstigster geprüfter idealo-Preis inkl. Versand · Gebraucht = Median Kleinanzeigen-Angebote
-export const CHECKED = "2026-09-23";
+export const CHECKED = "2026-09-24";
 export const PRICES = {
  "cpu-7600": {
   "price": 151.5,
@@ -310,10 +310,10 @@ export const PRICES = {
   "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/201654160_-vengeance-lpx-32gb-kit-ddr4-3200-cl16-corsair.html",
   "offers": 14,
   "date": "2026-09-23",
-  "used": 179,
-  "usedMin": 129,
+  "used": 175,
+  "usedMin": 110,
   "usedN": 13,
-  "usedDate": "2026-09-23"
+  "usedDate": "2026-09-24"
  },
  "gpu-5060": {
   "price": 418.9,
@@ -973,5 +973,189 @@ export const PRICES = {
   "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/207338724_-ninja-fx-raiden-xsoft-xl-daidai-orange-artisan.html",
   "offers": 1,
   "date": "2026-09-23"
+ },
+ "cpu-5600": {
+  "price": 109.31,
+  "shop": "jb-computer.de",
+  "product": "AMD Ryzen 5 5600",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/201899387_-ryzen-5-5600-amd.html",
+  "offers": 12,
+  "date": "2026-09-24"
+ },
+ "cpu-5800x3d": {
+  "price": 311,
+  "shop": "Marktplatz",
+  "product": "AMD Ryzen 7 5800X3D",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/202115887_-ryzen-7-5800x3d-amd.html",
+  "offers": 20,
+  "date": "2026-09-24",
+  "used": 265,
+  "usedMin": 215,
+  "usedN": 4,
+  "usedDate": "2026-09-24"
+ },
+ "cpu-12400f": {
+  "price": 127.7,
+  "shop": "e-tec.at (DE)",
+  "product": "Intel Core i5-12400F",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/201785821_-core-i5-12400f-intel.html",
+  "offers": 8,
+  "date": "2026-09-24",
+  "used": 80,
+  "usedMin": 75,
+  "usedN": 3,
+  "usedDate": "2026-09-24"
+ },
+ "mb-b550m": {
+  "price": 89.67,
+  "shop": "Marktplatz",
+  "product": "ASRock B550M Pro4",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/200411373_-b550m-pro4-asrock.html",
+  "offers": 19,
+  "date": "2026-09-24"
+ },
+ "ram-16-d4": {
+  "price": 143,
+  "shop": "eBay",
+  "product": "Corsair Vengeance LPX 16GB (2x8GB) DDR4-3200 CL16",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/6722121_-vengeance-lpx-16gb-ddr4-3200-cl16-cmk16gx4m2e3200c16-corsair.html",
+  "offers": 8,
+  "date": "2026-09-24",
+  "used": 80,
+  "usedMin": 45,
+  "usedN": 13,
+  "usedDate": "2026-09-24"
+ },
+ "gpu-3060ti": {
+  "price": 440.97,
+  "shop": "proshop.de",
+  "product": "BIOSTAR GeForce RTX 3060 Ti 8GB",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/204842999_-geforce-rtx-3060-ti-8gb-gddr6-biostar.html",
+  "offers": 5,
+  "date": "2026-09-24",
+  "used": 250,
+  "usedMin": 199,
+  "usedN": 4,
+  "usedDate": "2026-09-24"
+ },
+ "gpu-3070": {
+  "price": 491.48,
+  "shop": "proshop.de",
+  "product": "BIOSTAR GeForce RTX 3070 8GB",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/203712592_-geforce-rtx-3070-vn3706rm82-biostar.html",
+  "offers": 5,
+  "date": "2026-09-24",
+  "used": 250,
+  "usedMin": 249,
+  "usedN": 6,
+  "usedDate": "2026-09-24"
+ },
+ "gpu-3080": {
+  "price": 569.95,
+  "shop": "eBay",
+  "product": "Biostar GeForce RTX 3080 10GB",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/203614594_-geforce-rtx-3080-vn3806rmt3-biostar.html",
+  "offers": 4,
+  "date": "2026-09-24",
+  "used": 400,
+  "usedMin": 385,
+  "usedN": 6,
+  "usedDate": "2026-09-24"
+ },
+ "cool-lf240": {
+  "price": 62.4,
+  "shop": "e-tec.at (DE)",
+  "product": "ARCTIC Liquid Freezer III Pro 240, schwarz",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/206576839_-liquid-freezer-iii-pro-240-arctic-cooling.html",
+  "offers": 18,
+  "date": "2026-09-24",
+  "used": 40,
+  "usedMin": 25,
+  "usedN": 10,
+  "usedDate": "2026-09-24"
+ },
+ "cool-l9a": {
+  "price": 49.9,
+  "shop": "Amazon Marketplace",
+  "product": "Noctua NH-L9a-AM5",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/202763132_-nh-l9a-am5-brown-noctua.html",
+  "offers": 17,
+  "date": "2026-09-24",
+  "used": 39,
+  "usedMin": 20,
+  "usedN": 10,
+  "usedDate": "2026-09-24"
+ },
+ "ssd-nv3": {
+  "price": 146.34,
+  "shop": "Marktplatz",
+  "product": "Kingston NV3 1TB",
+  "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/204697967_-nv3-1tb-kingston.html",
+  "offers": 18,
+  "date": "2026-09-24",
+  "used": 110,
+  "usedMin": 90,
+  "usedN": 8,
+  "usedDate": "2026-09-24"
+ },
+ "cpu-5700x3d": {
+  "price": 230,
+  "used": 230,
+  "usedMin": 230,
+  "usedN": 3,
+  "usedDate": "2026-09-24",
+  "usedOnly": true,
+  "date": "2026-09-24",
+  "shop": "Kleinanzeigen"
+ },
+ "mb-b550tw": {
+  "price": 120,
+  "used": 120,
+  "usedMin": 90,
+  "usedN": 13,
+  "usedDate": "2026-09-24",
+  "usedOnly": true,
+  "date": "2026-09-24",
+  "shop": "Kleinanzeigen"
+ },
+ "gpu-6600": {
+  "price": 180,
+  "used": 180,
+  "usedMin": 165,
+  "usedN": 4,
+  "usedDate": "2026-09-24",
+  "usedOnly": true,
+  "date": "2026-09-24",
+  "shop": "Kleinanzeigen"
+ },
+ "gpu-6700xt": {
+  "price": 280,
+  "used": 280,
+  "usedMin": 260,
+  "usedN": 12,
+  "usedDate": "2026-09-24",
+  "usedOnly": true,
+  "date": "2026-09-24",
+  "shop": "Kleinanzeigen"
+ },
+ "gpu-6800": {
+  "price": 400,
+  "used": 400,
+  "usedMin": 300,
+  "usedN": 3,
+  "usedDate": "2026-09-24",
+  "usedOnly": true,
+  "date": "2026-09-24",
+  "shop": "Kleinanzeigen"
+ },
+ "gpu-4070": {
+  "price": 500,
+  "used": 500,
+  "usedMin": 480,
+  "usedN": 4,
+  "usedDate": "2026-09-24",
+  "usedOnly": true,
+  "date": "2026-09-24",
+  "shop": "Kleinanzeigen"
  }
 };

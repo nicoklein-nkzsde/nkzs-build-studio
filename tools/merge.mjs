@@ -42,6 +42,13 @@ for (const [id, u] of Object.entries(res.used || {})) {
   if (u.n >= 2 && u.median) Object.assign(prices[id], { used: u.median, usedMin: u.min, usedN: u.n, usedDate: res.date });
   else { delete prices[id].used; delete prices[id].usedMin; delete prices[id].usedN; }
 }
+// Teile, die es neu nicht mehr sinnvoll gibt: Gebrauchtpreis ist der echte Preis
+for (const id of res.usedOnly || []) {
+  const u = res.used?.[id];
+  if (!u?.median) continue;
+  prices[id] = { ...(prices[id] || {}), price: u.median, used: u.median, usedMin: u.min, usedN: u.n, usedDate: res.date, usedOnly: true, date: res.date, shop: 'Kleinanzeigen', product: undefined, url: undefined };
+  report.push(`♻ ${id}: nur gebraucht sinnvoll – ${u.median} €`);
+}
 for (const p of Object.values(prices)) for (const k of Object.keys(p)) if (p[k] === undefined) delete p[k];
 
 writeFileSync(out, `// Automatisch erzeugt vom Preis-Check (tools/merge.mjs). Nicht von Hand bearbeiten.
