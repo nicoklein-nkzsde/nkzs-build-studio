@@ -533,11 +533,11 @@ function slotRow(b, slot) {
     <div class="slot-head"><span class="slot-label">${SLOT_LABELS[slot]}</span><span class="slot-price">${p ? eur(lineTotal) : '–'}</span></div>
     <select class="big ${bad ? 'bad' : ''}" data-slot="${slot}">
       <option value="">— nichts —</option>
-      ${opts.map((o) => { const iss = issueFor(b, slot, o.id); return `<option value="${o.id}" ${o.id === s.id ? 'selected' : ''}>${iss ? '⚠ ' : ''}${esc(o.name)}${o.custom ? '' : ` · ${eur(o.price).replace(',00', '')}`}</option>`; }).join('')}
+      ${opts.map((o) => { const iss = issueFor(b, slot, o.id); return `<option value="${o.id}" ${o.id === s.id ? 'selected' : ''}>${iss ? '⚠ ' : ''}${o.pick ? '★ ' : ''}${esc(o.name)}${o.custom ? '' : ` · ${eur(o.price).replace(',00', '')}`}</option>`; }).join('')}
       <option value="__custom">+ Eigenes Teil hinzufügen…</option>
     </select>
     ${p && !p.custom ? `<div class="slot-meta">
-      <span class="info">${esc(p.info || '')}</span>
+      <span class="info">${p.pick ? '<b class="pick">NKZS-Empfehlung</b> ' : ''}${esc(p.info || '')}</span>
       <input class="mini" type="number" min="1" data-qty="${slot}" value="${p.qty}" title="Menge">×
       <input class="mini price" type="number" min="0" step="1" data-price="${slot}" value="${s.price ?? ''}" placeholder="${p.basePrice}" title="Eigener Preis (leer = Richtpreis)">€
     </div>${priceLine(slot, p, s)}` : p?.custom ? `<div class="slot-meta"><span class="info">Konfiguration unten · ${eur(kbPrice(b.kb))}</span></div>` : ''}
@@ -551,6 +551,7 @@ function priceLine(slot, p, s) {
   const ka = `https://www.kleinanzeigen.de/s-${encodeURIComponent(p.name.toLowerCase().replace(/\(.*?\)/g, '').trim().replace(/\s+/g, '-'))}/k0`;
   if (slot === 'os' || slot === 'office') return `<div class="price-line"><span class="pl-new">Offizielle Lizenz · keine Graumarkt-Keys (die gibt es „ab 3 €“ – Finger weg)</span></div>`;
   if (c?.usedOnly) return `<div class="price-line"><span class="pl-new warn">Neu kaum noch erhältlich · Preis = gebraucht (Median aus ${c.usedN} Kleinanzeigen, ${fmtDate(c.usedDate)})</span><a href="${ka}" target="_blank" rel="noopener">Kleinanz. ↗</a></div>`;
+  if (!c && p.priceNote) return `<div class="price-line"><span class="pl-new warn">${esc(p.priceNote)}</span>${p.buy ? `<a href="${p.buy}" target="_blank" rel="noopener">Shop ↗</a>` : ''}</div>`;
   const nw = c ? `<span class="pl-new" title="${esc(c.product || '')}">Neu ${eur(c.price)} · ${esc(c.shop || '')} · ${fmtDate(c.date)}</span>` : `<span class="pl-new warn">Richtpreis – noch nicht geprüft</span>`;
   const used = c?.used
     ? `<label class="pl-used ${adv[0]}" title="${esc(adv[1])}${c.usedN ? ` · ${c.usedN} Anzeigen` : ''}"><input type="checkbox" data-used="${slot}" ${s.used ? 'checked' : ''} ${adv[0] === 'no' ? 'disabled' : ''}>gebraucht ~${eur(c.used).replace(',00', '')} <b>−${Math.round((1 - c.used / c.price) * 100)} %</b></label>`
